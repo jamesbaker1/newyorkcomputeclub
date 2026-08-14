@@ -1,9 +1,9 @@
 # NEW YORK COMPUTE CLUB
 
-Indie hackers pooling GPUs to train and serve models. Hardware you can bike to.
+Pooled GPUs. Five boroughs. Hardware you can bike to.
 
-One page of thermal receipt paper (`public/index.html`), zero dependencies.
-Rub it — compute is heat, heat is ink.
+One dark page (`public/index.html`), zero dependencies.
+Rub it — compute is heat, heat is light.
 
 ## Layout
 

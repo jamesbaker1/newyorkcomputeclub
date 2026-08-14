@@ -3,20 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0E0C0A">
 <title>New York Compute Club</title>
-<meta name="description" content="Indie hackers pooling GPUs to train and serve models. Hardware you can bike to.">
+<meta name="description" content="Pooled GPUs. Five boroughs.">
 <meta property="og:title" content="New York Compute Club">
-<meta property="og:description" content="Indie hackers pooling GPUs to train and serve models. Hardware you can bike to.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23F4EFE3'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<meta property="og:description" content="Pooled GPUs. Five boroughs.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
 <style>
   :root {
-    --paper: #F4EFE3;
-    --ink: #1D1810;
+    --paper: #0E0C0A;
+    --ink: #EDE6DA;
     --heat: #FF4E00;
-    --heat-text: #C93400;
-    --fade: #6F6656;
-    --hair: rgba(29, 24, 16, .28);
+    --heat-text: #FF8A4A;
+    --fade: #7A7160;
+    --hair: rgba(237, 230, 218, .22);
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
@@ -150,7 +151,7 @@
 <div class="sheet">
   <header>
     <span>N.Y.C.C.</span>
-    <span id="temp">68.4°F</span>
+    <span>NYC · <span id="temp">68.4°F</span></span>
   </header>
 
   <main>
@@ -189,8 +190,7 @@
      so developed ink scrolls with the page. */
 
   const ROSTER = [
-    'INDIE HACKERS — POOLED GPUS',
-    'TRAIN + SERVE — SPLIT THE CON ED BILL',
+    'SPLIT THE CON ED BILL',
     '2× RTX 4090 — RIDGEWOOD',
     "H100 (DON'T ASK) — LONG ISLAND CITY",
     'A6000 — SUNSET PARK',
@@ -200,14 +200,16 @@
     '7900 XTX — MOTT HAVEN',
     '4070 SUPER — INWOOD',
     'STATEN ISLAND — SORRY',
+    'LAST STOP ON THE G',
     'FIRST THURSDAYS. ASK AROUND.',
     'THE PASSWORD IS THE WIFI PASSWORD',
   ];
 
   const CELL = 12;                      // heat cell size, CSS px
   const INK_FONT = '600 12.5px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
-  const INK = [29, 24, 16];
-  const SCORCH = [255, 78, 0];
+  const GLOW = '#FFCFA8';               // hidden text glows like heated filament
+  const HALO = '#FF5A00';
+  const SCORCH = [255, 60, 0];
 
   const canvas = document.getElementById('heat');
   const ctx = canvas.getContext('2d');
@@ -246,7 +248,7 @@
     scorchD = sctx.createImageData(cols, rows);
     const m = maskD.data, s = scorchD.data;
     for (let i = 0; i < cols * rows; i++) {
-      m[i * 4] = INK[0]; m[i * 4 + 1] = INK[1]; m[i * 4 + 2] = INK[2];
+      m[i * 4] = m[i * 4 + 1] = m[i * 4 + 2] = 255;
       s[i * 4] = SCORCH[0]; s[i * 4 + 1] = SCORCH[1]; s[i * 4 + 2] = SCORCH[2];
     }
     placeInk();
@@ -336,7 +338,7 @@
       let a = (t - .06) / .3;
       a = a < 0 ? 0 : a > 1 ? 1 : a;
       m[i * 4 + 3] = (a * (2 - a)) * 255;
-      s[i * 4 + 3] = Math.min(40, t * 44);
+      s[i * 4 + 3] = Math.min(58, t * 62);
     }
     mctx.putImageData(maskD, 0, 0);
     sctx.putImageData(scorchD, 0, 0);
@@ -347,7 +349,9 @@
     ictx.globalCompositeOperation = 'source-over';
     ictx.clearRect(0, 0, vw, vh);
     ictx.font = INK_FONT;
-    ictx.fillStyle = 'rgb(' + INK.join(',') + ')';
+    ictx.fillStyle = GLOW;
+    ictx.shadowColor = HALO;
+    ictx.shadowBlur = 10;
     ictx.textBaseline = 'top';
     for (const p of placed) {
       const y = p.y - scrollY;
@@ -358,14 +362,17 @@
       p.lines.forEach((l, i) => ictx.fillText(l, 0, i * LINE_H));
       ictx.restore();
     }
+    ictx.shadowBlur = 0;
     ictx.globalCompositeOperation = 'destination-in';
     ictx.setTransform(1, 0, 0, 1, 0, 0);
     ictx.drawImage(maskC, 0, sy, sw, sh, 0, 0, inkC.width, inkC.height);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'lighter';
     ctx.drawImage(scorchC, 0, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     ctx.drawImage(inkC, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   function frame() {
@@ -395,7 +402,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, vw, vh);
     ctx.font = INK_FONT;
-    ctx.fillStyle = 'rgba(29,24,16,.5)';
+    ctx.fillStyle = 'rgba(255,207,168,.45)';
     ctx.textBaseline = 'top';
     for (const p of placed) {
       const y = p.y - scrollY;
@@ -438,7 +445,7 @@
 
   resize();
   setTimeout(() => {
-    if (!warmed) bloom(placed.find(p => p.lines[0] === 'INDIE HACKERS') || placed[0]);
+    if (!warmed) bloom(placed[0]);
   }, 1500);
   setInterval(() => {
     if (!document.hidden && heatTotal < 2 && placed.length) {
