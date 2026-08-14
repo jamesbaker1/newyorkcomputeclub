@@ -1,0 +1,8 @@
+name = "newyorkcomputeclub"
+compatibility_date = "2026-08-01"
+pages_build_output_dir = "public"
+
+# After `npx wrangler kv namespace create SIGNUPS`, paste the id it prints here.
+[[kv_namespaces]]
+binding = "SIGNUPS"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
