@@ -37,7 +37,14 @@
     z-index: 1;
     pointer-events: none;
   }
-  .sheet { position: relative; z-index: 2; }
+  .sheet {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
 
   header, footer .frow {
     display: flex;
@@ -51,26 +58,15 @@
     color: var(--fade);
   }
   header { padding: 22px 28px 0; }
-  .live { white-space: nowrap; }
-  .dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #00933C;
-    margin-right: 7px;
-    animation: pulse 2.6s ease-in-out infinite;
-  }
-  @keyframes pulse { 50% { opacity: .35; } }
 
-  main { max-width: 860px; margin: 0 auto; padding: 0 24px; }
-
-  .hero { margin-top: clamp(72px, 13vh, 150px); }
-  .kicker {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    letter-spacing: .16em;
-    color: var(--fade);
-    margin: 0 0 26px;
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 56px 24px;
   }
   h1 {
     font-size: clamp(2.9rem, 12.5vw, 7.2rem);
@@ -80,62 +76,12 @@
     text-transform: uppercase;
     margin: 0;
   }
-  .sub {
-    font-size: clamp(1.02rem, 2.2vw, 1.2rem);
-    line-height: 1.55;
-    max-width: 33em;
-    margin: 34px 0 0;
-  }
-  .hint {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--fade);
-    margin: 30px 0 0;
-  }
 
-  .stats {
-    margin-top: clamp(90px, 14vh, 170px);
-    padding: 15px 0;
-    border-top: 1px dashed var(--hair);
-    border-bottom: 1px dashed var(--hair);
-    font-family: var(--mono);
-    font-size: 12.5px;
-    letter-spacing: .05em;
-    color: var(--fade);
-  }
-  .stats b { color: var(--heat-text); font-weight: 700; }
-
-  .rules {
-    margin-top: clamp(80px, 12vh, 150px);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 44px;
-  }
-  .rules i {
-    font-style: normal;
-    font-family: var(--mono);
-    font-weight: 700;
-    color: var(--heat-text);
-    font-size: 13px;
-    margin-right: 10px;
-  }
-  .rules b {
-    font-size: 13.5px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-  }
-  .rules p {
-    margin: 12px 0 0;
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--fade);
-  }
-
-  .invite { margin-top: clamp(90px, 14vh, 170px); }
-  .lead { font-size: clamp(1.05rem, 2.2vw, 1.2rem); margin: 0 0 26px; }
-  form .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  form { margin-top: 46px; }
+  form .row { display: flex; gap: 14px; }
   input[type=email] {
-    flex: 1 1 240px;
+    flex: 1 1 200px;
+    max-width: 320px;
     font-family: var(--mono);
     font-size: 15px;
     color: var(--ink);
@@ -149,15 +95,14 @@
   input[type=email]:focus { outline: none; border-color: var(--heat); }
   button {
     flex: 0 0 auto;
+    width: 54px;
     font-family: var(--sans);
     font-weight: 700;
-    font-size: 13px;
-    letter-spacing: .09em;
+    font-size: 18px;
     color: var(--paper);
     background: var(--ink);
     border: 0;
     border-radius: 0;
-    padding: 15px 26px;
     cursor: pointer;
     transition: background-color 120ms steps(2, end);
   }
@@ -175,7 +120,7 @@
   #msg.ok { color: var(--ink); }
   #msg.err { color: var(--heat-text); }
 
-  footer { margin-top: clamp(100px, 16vh, 190px); padding: 0 28px 30px; }
+  footer { padding: 0 28px 26px; }
   footer .frow { border-top: 1px dashed var(--hair); padding-top: 16px; }
   .tear {
     display: flex;
@@ -196,12 +141,7 @@
   }
 
   @media (max-width: 700px) {
-    .rules { grid-template-columns: 1fr; gap: 34px; }
     header, footer { padding-left: 24px; padding-right: 24px; }
-  }
-  @media (max-width: 480px) {
-    button { flex: 1 1 100%; padding: 16px; }
-    .est { display: none; }
   }
 </style>
 </head>
@@ -209,45 +149,28 @@
 <canvas id="heat" aria-hidden="true"></canvas>
 <div class="sheet">
   <header>
-    <span>N.Y.C.C. <span class="est">— EST. 2026</span></span>
-    <span class="live"><span class="dot"></span>OPEN 24 HRS · <span id="temp">68.4°F</span></span>
+    <span>N.Y.C.C.</span>
+    <span id="temp">68.4°F</span>
   </header>
 
   <main>
-    <section class="hero">
-      <p class="kicker">MEMBERS' POOL — FIVE BOROUGHS</p>
+    <div class="mark">
       <h1>New York<br>Compute<br>Club</h1>
-      <p class="sub">Indie hackers pooling GPUs to train and serve models. Your&nbsp;4090 sleeps twenty hours a day. Hardware you can bike&nbsp;to.</p>
-      <p class="hint">printed on thermal paper — rub to develop</p>
-    </section>
-
-    <section class="stats" aria-label="club stats">
-      MEMBERS 27 · GPUS 41 · POOLED VRAM 2.1 TB · CLOUD BILL <b>$0</b>
-    </section>
-
-    <section class="rules" aria-label="how it works">
-      <div><i>01</i><b>Pool in</b><p>Your GPU joins the rack while you sleep.</p></div>
-      <div><i>02</i><b>Pool out</b><p>Train and serve on everyone's silicon.</p></div>
-      <div><i>03</i><b>Show up</b><p>First Thursdays, in person. Bring a benchmark.</p></div>
-    </section>
-
-    <section class="invite">
-      <p class="lead">Membership moves by referral. This works too.</p>
       <form id="join" action="/api/subscribe" method="post">
         <div class="row">
           <input type="email" name="email" required placeholder="you@wherever.nyc"
                  autocomplete="email" inputmode="email" aria-label="your email">
           <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <button type="submit">GET ON THE LIST</button>
+          <button type="submit" aria-label="get on the list">→</button>
         </div>
       </form>
-      <p id="msg" role="status">replies are slow — training runs come first.</p>
-    </section>
+      <p id="msg" role="status"></p>
+    </div>
   </main>
 
   <footer>
     <div class="frow">
-      <span>NO CLOUD — JUST OTHER PEOPLE'S APARTMENTS.</span>
+      <span>EST. MMXXVI</span>
       <span>40.7128° N · 74.0060° W</span>
     </div>
     <div class="tear" aria-hidden="true">✂</div>
@@ -266,14 +189,16 @@
      so developed ink scrolls with the page. */
 
   const ROSTER = [
+    'INDIE HACKERS — POOLED GPUS',
+    'TRAIN + SERVE — SPLIT THE CON ED BILL',
     '2× RTX 4090 — RIDGEWOOD',
+    "H100 (DON'T ASK) — LONG ISLAND CITY",
     'A6000 — SUNSET PARK',
     '3090 TI (NVLINK) — BED-STUY',
     'M3 ULTRA 192 GB — CHINATOWN',
-    "H100 (DON'T ASK) — LONG ISLAND CITY",
     'V100 (LOUD) — GOWANUS — DOWN: LANDLORD',
-    '4070 SUPER — INWOOD',
     '7900 XTX — MOTT HAVEN',
+    '4070 SUPER — INWOOD',
     'STATEN ISLAND — SORRY',
     'FIRST THURSDAYS. ASK AROUND.',
     'THE PASSWORD IS THE WIFI PASSWORD',
@@ -338,7 +263,7 @@
     ictx.font = INK_FONT;
     const pad = 18;
     const blocks = [];
-    document.querySelectorAll('header, footer .frow, .tear, .copy, h1, p, form, .stats, .rules > div')
+    document.querySelectorAll('header, footer .frow, .tear, .copy, h1, p, form')
       .forEach(el => {
         const r = el.getBoundingClientRect();
         blocks.push({
@@ -349,31 +274,22 @@
     const hits = (a, list) => list.some(b =>
       a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
 
-    const statsTop = document.querySelector('.stats').getBoundingClientRect().top + scrollY;
-    const wholeDoc = { ymin: 66, ymax: docH - 160, tries: 320 };
-    const heroBand = { ymin: 66, ymax: statsTop - 30, tries: 140 };
-
     placed = [];
-    ROSTER.forEach((s, idx) => {
+    for (const s of ROSTER) {
       const parts = s.split(' — ');
       const lines = parts.length > 1 ? [parts[0], parts.slice(1).join(' — ')] : [s];
       const w = Math.max(...lines.map(l => ictx.measureText(l).width));
       const h = lines.length * LINE_H;
-      const zones = idx < 4 ? [heroBand, wholeDoc] : [wholeDoc];
-      for (const z of zones) {
-        let done = false;
-        for (let i = 0; i < z.tries && !done; i++) {
-          const x = 12 + Math.random() * Math.max(10, vw - 24 - w);
-          const y = z.ymin + Math.random() * Math.max(10, z.ymax - z.ymin - h);
-          const box = { x: x - 8, y: y - 8, w: w + 16, h: h + 16 };
-          if (!hits(box, blocks) && !hits(box, placed.map(p => p.box))) {
-            placed.push({ lines, x, y, rot: (Math.random() - .5) * .045, box });
-            done = true;
-          }
+      for (let i = 0; i < 360; i++) {
+        const x = 12 + Math.random() * Math.max(10, vw - 24 - w);
+        const y = 60 + Math.random() * Math.max(10, docH - 170 - h);
+        const box = { x: x - 8, y: y - 8, w: w + 16, h: h + 16 };
+        if (!hits(box, blocks) && !hits(box, placed.map(p => p.box))) {
+          placed.push({ lines, x, y, rot: (Math.random() - .5) * .045, box });
+          break;
         }
-        if (done) break;
       }
-    });
+    }
     placed.sort((a, b) => a.y - b.y);
     window.__nycc = { placed };
   }
@@ -505,11 +421,11 @@
   let rt;
   addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
 
-  /* The page demos itself once: a warm finger drags across the first
-     hidden roster line ~1.5s after load. */
-  function bloom() {
-    if (warmed || reduced || !placed.length) return;
-    const p = placed.find(q => q.y > scrollY) || placed[0];
+  /* The page demos itself: a warm finger drags across a hidden line ~1.5s
+     after load (the one that says what this is), then — whenever the paper
+     has gone cold — across a random one every so often. */
+  function bloom(p) {
+    if (reduced || !p) return;
     const width = Math.min(p.box.w, vw - p.x - 20);
     const cy = p.y + (p.lines.length * LINE_H) / 2;
     let i = 0;
@@ -521,7 +437,14 @@
   }
 
   resize();
-  setTimeout(bloom, 1500);
+  setTimeout(() => {
+    if (!warmed) bloom(placed.find(p => p.lines[0] === 'INDIE HACKERS') || placed[0]);
+  }, 1500);
+  setInterval(() => {
+    if (!document.hidden && heatTotal < 2 && placed.length) {
+      bloom(placed[Math.floor(Math.random() * placed.length)]);
+    }
+  }, 18000);
 
   /* ---------- signup ---------- */
   const form = document.getElementById('join');
@@ -544,7 +467,7 @@
       const d = await r.json();
       if (d.ok) {
         msg.className = 'ok';
-        msg.textContent = d.message + ' — see you on a first thursday.';
+        msg.textContent = d.message + '.';
         form.reset();
         const fr = form.getBoundingClientRect();
         for (let i = 0; i < 5; i++) {
