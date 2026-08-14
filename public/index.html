@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0E0C0A">
+<title>New York Compute Club</title>
+<meta name="description" content="Pooled GPUs. Five boroughs.">
+<meta property="og:title" content="New York Compute Club">
+<meta property="og:description" content="Pooled GPUs. Five boroughs.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<style>
+  @font-face {
+    font-family: 'Anton';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/anton-latin.woff2') format('woff2');
+  }
+  :root {
+    --paper: #0E0C0A;
+    --ink: #EDE6DA;
+    --heat: #FF4E00;
+    --heat-text: #FF8A4A;
+    --fade: #7A7160;
+    --hair: rgba(237, 230, 218, .22);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--heat); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--heat); outline-offset: 3px; }
+
+  #heat {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .sheet {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header, footer .frow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px 24px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+  }
+  header { padding: 22px 28px 0; }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 56px 24px;
+  }
+  h1 {
+    font-family: 'Anton', 'Arial Narrow', var(--sans);
+    font-size: clamp(3.6rem, 16vw, 10rem);
+    font-weight: 400;
+    line-height: .88;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  form { margin-top: 46px; }
+  form .row { display: flex; gap: 14px; }
+  input[type=email] {
+    flex: 1 1 200px;
+    max-width: 320px;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 0;
+    padding: 12px 2px;
+  }
+  input[type=email]::placeholder { color: var(--fade); opacity: .75; }
+  input[type=email]:focus { outline: none; border-color: var(--heat); }
+  button {
+    flex: 0 0 auto;
+    width: 54px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--paper);
+    background: var(--ink);
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 120ms steps(2, end);
+  }
+  button:hover, button:focus-visible { background: var(--heat); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .55; cursor: default; }
+  .hp { position: absolute; left: -5000px; width: 1px; height: 1px; }
+  #msg {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fade);
+    margin: 18px 0 0;
+    min-height: 1em;
+  }
+  #msg.ok { color: var(--ink); }
+  #msg.err { color: var(--heat-text); }
+
+  footer { padding: 0 28px 26px; }
+  footer .frow { border-top: 1px dashed var(--hair); padding-top: 16px; }
+  .tear {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 46px;
+    color: var(--fade);
+    font-size: 13px;
+  }
+  .tear::after { content: ""; flex: 1; border-top: 2px dashed var(--hair); }
+  .copy {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .32em;
+    color: var(--fade);
+    text-align: center;
+    margin: 20px 0 4px;
+  }
+
+  @media (max-width: 700px) {
+    header, footer { padding-left: 24px; padding-right: 24px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="heat" aria-hidden="true"></canvas>
+<div class="sheet">
+  <header>
+    <span>N.Y.C.C.</span>
+    <span>NYC · <span id="temp">68.4°F</span></span>
+  </header>
+
+  <main>
+    <div class="mark">
+      <h1>New York<br>Compute<br>Club</h1>
+      <form id="join" action="/api/subscribe" method="post">
+        <div class="row">
+          <input type="email" name="email" required placeholder="you@wherever.nyc"
+                 autocomplete="email" inputmode="email" aria-label="your email">
+          <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button type="submit" aria-label="get on the list">→</button>
+        </div>
+      </form>
+      <p id="msg" role="status"></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="frow">
+      <span>EST. MMXXVI</span>
+      <span>40.7128° N · 74.0060° W</span>
+    </div>
+    <div class="tear" aria-hidden="true">✂</div>
+    <div class="copy">CUSTOMER COPY</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- thermal paper engine ----------
+     A heat field lives over the whole document. Pointer movement warms it,
+     heat diffuses and cools, and wherever the paper is warm enough, hidden
+     roster ink develops (plus a faint scorch). Everything is document-space,
+     so developed ink scrolls with the page. */
+
+  const ROSTER = [
+    'SPLIT THE CON ED BILL',
+    '2× RTX 4090 — RIDGEWOOD',
+    "H100 (DON'T ASK) — LONG ISLAND CITY",
+    'A6000 — SUNSET PARK',
+    '3090 TI (NVLINK) — BED-STUY',
+    'M3 ULTRA 192 GB — CHINATOWN',
+    'V100 (LOUD) — GOWANUS — DOWN: LANDLORD',
+    '7900 XTX — MOTT HAVEN',
+    '4070 SUPER — INWOOD',
+    'STATEN ISLAND — SORRY',
+    'LAST STOP ON THE G',
+    'FIRST THURSDAYS. ASK AROUND.',
+    'THE PASSWORD IS THE WIFI PASSWORD',
+  ];
+
+  const CELL = 12;                      // heat cell size, CSS px
+  const INK_FONT = '600 12.5px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+  const GLOW = '#FFCFA8';               // hidden text glows like heated filament
+  const HALO = '#FF5A00';
+  const SCORCH = [255, 60, 0];
+
+  const canvas = document.getElementById('heat');
+  const ctx = canvas.getContext('2d');
+  const tempEl = document.getElementById('temp');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+
+  let vw = 0, vh = 0, docH = 0, cols = 0, rows = 0;
+  let heat, heatNext, heatTotal = 0;
+  let placed = [];
+  let running = false, warmed = false, frames = 0;
+
+  const maskC = document.createElement('canvas');
+  const scorchC = document.createElement('canvas');
+  const inkC = document.createElement('canvas');
+  let maskD, scorchD;
+  const mctx = maskC.getContext('2d');
+  const sctx = scorchC.getContext('2d');
+  const ictx = inkC.getContext('2d');
+
+  function resize() {
+    vw = innerWidth;
+    vh = innerHeight;
+    docH = document.documentElement.scrollHeight;
+    cols = Math.max(8, Math.ceil(vw / CELL));
+    rows = Math.max(8, Math.ceil(docH / CELL));
+    heat = new Float32Array(cols * rows);
+    heatNext = new Float32Array(cols * rows);
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    inkC.width = canvas.width;
+    inkC.height = canvas.height;
+    maskC.width = scorchC.width = cols;
+    maskC.height = scorchC.height = rows;
+    maskD = mctx.createImageData(cols, rows);
+    scorchD = sctx.createImageData(cols, rows);
+    const m = maskD.data, s = scorchD.data;
+    for (let i = 0; i < cols * rows; i++) {
+      m[i * 4] = m[i * 4 + 1] = m[i * 4 + 2] = 255;
+      s[i * 4] = SCORCH[0]; s[i * 4 + 1] = SCORCH[1]; s[i * 4 + 2] = SCORCH[2];
+    }
+    placeInk();
+    if (reduced) drawReduced();
+  }
+
+  /* Scatter roster entries in whitespace as short two-line receipt stamps
+     (gear on top, neighborhood below) so they fit the margins. Measure every
+     visible text block and only accept spots that clear them and each other.
+     The first few entries prefer the hero band — where people rub first. */
+  const LINE_H = 17;
+  function placeInk() {
+    ictx.setTransform(1, 0, 0, 1, 0, 0);
+    ictx.font = INK_FONT;
+    const pad = 18;
+    const blocks = [];
+    document.querySelectorAll('header, footer .frow, .tear, .copy, h1, p, form')
+      .forEach(el => {
+        const r = el.getBoundingClientRect();
+        blocks.push({
+          x: r.left + scrollX - pad, y: r.top + scrollY - pad,
+          w: r.width + pad * 2, h: r.height + pad * 2,
+        });
+      });
+    const hits = (a, list) => list.some(b =>
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
+
+    placed = [];
+    for (const s of ROSTER) {
+      const parts = s.split(' — ');
+      const lines = parts.length > 1 ? [parts[0], parts.slice(1).join(' — ')] : [s];
+      const w = Math.max(...lines.map(l => ictx.measureText(l).width));
+      const h = lines.length * LINE_H;
+      for (let i = 0; i < 360; i++) {
+        const x = 12 + Math.random() * Math.max(10, vw - 24 - w);
+        const y = 60 + Math.random() * Math.max(10, docH - 170 - h);
+        const box = { x: x - 8, y: y - 8, w: w + 16, h: h + 16 };
+        if (!hits(box, blocks) && !hits(box, placed.map(p => p.box))) {
+          placed.push({ lines, x, y, rot: (Math.random() - .5) * .045, box });
+          break;
+        }
+      }
+    }
+    placed.sort((a, b) => a.y - b.y);
+    window.__nycc = { placed };
+  }
+
+  function splat(px, py, strength = .8, radius = 3.4) {
+    const cx = px / CELL, cy = py / CELL;
+    const r = Math.ceil(radius);
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const gx = Math.round(cx + dx), gy = Math.round(cy + dy);
+        if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) continue;
+        const d = Math.hypot(cx - gx, cy - gy);
+        if (d < radius) {
+          const i = gy * cols + gx;
+          heat[i] = Math.min(1.25, heat[i] + (1 - d / radius) * strength);
+        }
+      }
+    }
+    warmed = true;
+    wake();
+  }
+
+  function step() {
+    heatTotal = 0;
+    for (let y = 0; y < rows; y++) {
+      const up = y > 0 ? y - 1 : y, dn = y < rows - 1 ? y + 1 : y;
+      for (let x = 0; x < cols; x++) {
+        const lf = x > 0 ? x - 1 : x, rt = x < cols - 1 ? x + 1 : x;
+        const i = y * cols + x;
+        const n = (heat[up * cols + x] + heat[dn * cols + x] +
+                   heat[y * cols + lf] + heat[y * cols + rt]) * .25;
+        const t = (heat[i] * .88 + n * .12) * .9885;
+        heatNext[i] = t > .0004 ? t : 0;
+        heatTotal += heatNext[i];
+      }
+    }
+    [heat, heatNext] = [heatNext, heat];
+  }
+
+  function draw() {
+    const m = maskD.data, s = scorchD.data;
+    for (let i = 0; i < cols * rows; i++) {
+      const t = heat[i];
+      let a = (t - .06) / .3;
+      a = a < 0 ? 0 : a > 1 ? 1 : a;
+      m[i * 4 + 3] = (a * (2 - a)) * 255;
+      s[i * 4 + 3] = Math.min(58, t * 62);
+    }
+    mctx.putImageData(maskD, 0, 0);
+    sctx.putImageData(scorchD, 0, 0);
+
+    const sy = scrollY / CELL, sh = vh / CELL, sw = vw / CELL;
+
+    ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ictx.globalCompositeOperation = 'source-over';
+    ictx.clearRect(0, 0, vw, vh);
+    ictx.font = INK_FONT;
+    ictx.fillStyle = GLOW;
+    ictx.shadowColor = HALO;
+    ictx.shadowBlur = 10;
+    ictx.textBaseline = 'top';
+    for (const p of placed) {
+      const y = p.y - scrollY;
+      if (y < -60 || y > vh + 60) continue;
+      ictx.save();
+      ictx.translate(p.x, y);
+      ictx.rotate(p.rot);
+      p.lines.forEach((l, i) => ictx.fillText(l, 0, i * LINE_H));
+      ictx.restore();
+    }
+    ictx.shadowBlur = 0;
+    ictx.globalCompositeOperation = 'destination-in';
+    ictx.setTransform(1, 0, 0, 1, 0, 0);
+    ictx.drawImage(maskC, 0, sy, sw, sh, 0, 0, inkC.width, inkC.height);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(scorchC, 0, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(inkC, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function frame() {
+    step();
+    draw();
+    if (++frames % 12 === 0) {
+      tempEl.textContent = (68.4 + Math.min(35.4, heatTotal * .09)).toFixed(1) + '°F';
+    }
+    if (heatTotal > .5) requestAnimationFrame(frame);
+    else {
+      running = false;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      tempEl.textContent = '68.4°F';
+    }
+  }
+
+  function wake() {
+    if (!running && !reduced) {
+      running = true;
+      requestAnimationFrame(frame);
+    }
+  }
+
+  /* Reduced motion: no simulation — the roster is simply printed, faint. */
+  function drawReduced() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, vw, vh);
+    ctx.font = INK_FONT;
+    ctx.fillStyle = 'rgba(255,207,168,.45)';
+    ctx.textBaseline = 'top';
+    for (const p of placed) {
+      const y = p.y - scrollY;
+      if (y < -60 || y > vh + 60) continue;
+      ctx.save(); ctx.translate(p.x, y); ctx.rotate(p.rot);
+      p.lines.forEach((l, i) => ctx.fillText(l, 0, i * LINE_H));
+      ctx.restore();
+    }
+  }
+
+  addEventListener('pointermove', e => { if (!reduced) splat(e.pageX, e.pageY); }, { passive: true });
+  addEventListener('pointerdown', e => { if (!reduced) splat(e.pageX, e.pageY, .9, 4); }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (!reduced && e.touches[0]) {
+      const t = e.touches[0];
+      splat(t.clientX + scrollX, t.clientY + scrollY, .6, 3.4);
+    }
+  }, { passive: true });
+  addEventListener('scroll', () => {
+    if (reduced) requestAnimationFrame(drawReduced);
+  }, { passive: true });
+
+  let rt;
+  addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
+
+  /* The page demos itself: a warm finger drags across a hidden line ~1.5s
+     after load (the one that says what this is), then — whenever the paper
+     has gone cold — across a random one every so often. */
+  function bloom(p) {
+    if (reduced || !p) return;
+    const width = Math.min(p.box.w, vw - p.x - 20);
+    const cy = p.y + (p.lines.length * LINE_H) / 2;
+    let i = 0;
+    const n = 14;
+    const iv = setInterval(() => {
+      splat(p.x + (i / n) * width, cy, .85, 4);
+      if (++i > n) clearInterval(iv);
+    }, 46);
+  }
+
+  resize();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
+  setTimeout(() => {
+    if (!warmed) bloom(placed[0]);
+  }, 1500);
+  setInterval(() => {
+    if (!document.hidden && heatTotal < 2 && placed.length) {
+      bloom(placed[Math.floor(Math.random() * placed.length)]);
+    }
+  }, 18000);
+
+  /* ---------- signup ---------- */
+  const form = document.getElementById('join');
+  const msg = document.getElementById('msg');
+  const btn = form.querySelector('button');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = form.email.value.trim();
+    if (!email) return;
+    btn.disabled = true;
+    msg.className = '';
+    msg.textContent = 'printing…';
+    try {
+      const r = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, company: form.company.value }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        msg.className = 'ok';
+        msg.textContent = d.message + '.';
+        form.reset();
+        const fr = form.getBoundingClientRect();
+        for (let i = 0; i < 5; i++) {
+          splat(fr.left + scrollX + Math.random() * fr.width,
+                fr.top + scrollY + fr.height / 2 + (Math.random() - .5) * 60, 1, 5);
+        }
+      } else {
+        msg.className = 'err';
+        msg.textContent = d.error || 'the printer jammed. try again.';
+      }
+    } catch {
+      msg.className = 'err';
+      msg.textContent = 'printer offline — try again in a bit.';
+    }
+    btn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
