@@ -8,20 +8,24 @@ Rub it — compute is heat, heat is light.
 ## Layout
 
 - `public/index.html` — the whole site. No build step, no frameworks.
-- `functions/api/subscribe.js` — Cloudflare Pages Function; takes an email, drops it in KV.
-- `wrangler.toml` — Pages config + KV binding.
+- `public/fonts/` — self-hosted Anton (SIL OFL).
+- `src/worker.js` — Cloudflare Worker; serves `public/` and handles `POST /api/subscribe` into KV.
+- `wrangler.toml` — Worker config: static assets + KV binding.
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Workers)
 
-1. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** →
-   pick this repo. Build command: *(none)*. Build output directory: `public`.
-2. Create the list:
-   ```sh
+The repo deploys with plain `npx wrangler deploy` — which is exactly what
+Cloudflare's git integration (Workers Builds) runs. Connect the repo and it
+ships as-is; signups answer "list is not wired up yet" until KV exists.
+
+To turn the list on:
+
+1. ```sh
    npx wrangler kv namespace create SIGNUPS
    ```
-   Paste the printed `id` into `wrangler.toml`. (Dashboard route: **Storage & Databases → KV**,
-   then bind it to the Pages project under **Settings → Bindings** with the name `SIGNUPS`.)
-3. Push. Cloudflare builds nothing and serves everything.
+2. Paste the printed `id` into `wrangler.toml` and uncomment the
+   `[[kv_namespaces]]` block.
+3. Push (or `npx wrangler deploy`).
 
 ### Read the list
 
@@ -34,5 +38,5 @@ Each key is an email; each value has a signup timestamp and country.
 ### Local dev
 
 ```sh
-npx wrangler pages dev public
+npx wrangler dev
 ```

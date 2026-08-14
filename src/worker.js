@@ -1,5 +1,7 @@
-// POST /api/subscribe — adds an email to the club list (Cloudflare KV).
-// Requires a KV namespace bound as SIGNUPS in the Pages project settings.
+// Serves the static site and handles POST /api/subscribe — adds an email to
+// the club list (Cloudflare KV). Until a KV namespace is bound as SIGNUPS in
+// wrangler.toml, signups answer "list is not wired up yet" and everything
+// else still works.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -10,7 +12,7 @@ function json(body, status = 200) {
   });
 }
 
-export async function onRequestPost({ request, env }) {
+async function subscribe(request, env) {
   let email = '';
   let honeypot = '';
   try {
@@ -54,3 +56,13 @@ export async function onRequestPost({ request, env }) {
 
   return json({ ok: true, message: 'you are on the list' });
 }
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/subscribe' && request.method === 'POST') {
+      return subscribe(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  },
+};
