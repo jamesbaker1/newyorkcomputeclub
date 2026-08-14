@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>New York Compute Club</title>
+<meta name="description" content="Indie hackers pooling GPUs to train and serve models. Hardware you can bike to.">
+<meta property="og:title" content="New York Compute Club">
+<meta property="og:description" content="Indie hackers pooling GPUs to train and serve models. Hardware you can bike to.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23F4EFE3'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper: #F4EFE3;
+    --ink: #1D1810;
+    --heat: #FF4E00;
+    --heat-text: #C93400;
+    --fade: #6F6656;
+    --hair: rgba(29, 24, 16, .28);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--heat); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--heat); outline-offset: 3px; }
+
+  #heat {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .sheet { position: relative; z-index: 2; }
+
+  header, footer .frow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px 24px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+  }
+  header { padding: 22px 28px 0; }
+  .live { white-space: nowrap; }
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #00933C;
+    margin-right: 7px;
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  main { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  .hero { margin-top: clamp(72px, 13vh, 150px); }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    color: var(--fade);
+    margin: 0 0 26px;
+  }
+  h1 {
+    font-size: clamp(2.9rem, 12.5vw, 7.2rem);
+    font-weight: 800;
+    line-height: .92;
+    letter-spacing: -.025em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .sub {
+    font-size: clamp(1.02rem, 2.2vw, 1.2rem);
+    line-height: 1.55;
+    max-width: 33em;
+    margin: 34px 0 0;
+  }
+  .hint {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fade);
+    margin: 30px 0 0;
+  }
+
+  .stats {
+    margin-top: clamp(90px, 14vh, 170px);
+    padding: 15px 0;
+    border-top: 1px dashed var(--hair);
+    border-bottom: 1px dashed var(--hair);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: .05em;
+    color: var(--fade);
+  }
+  .stats b { color: var(--heat-text); font-weight: 700; }
+
+  .rules {
+    margin-top: clamp(80px, 12vh, 150px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 44px;
+  }
+  .rules i {
+    font-style: normal;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--heat-text);
+    font-size: 13px;
+    margin-right: 10px;
+  }
+  .rules b {
+    font-size: 13.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .rules p {
+    margin: 12px 0 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fade);
+  }
+
+  .invite { margin-top: clamp(90px, 14vh, 170px); }
+  .lead { font-size: clamp(1.05rem, 2.2vw, 1.2rem); margin: 0 0 26px; }
+  form .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  input[type=email] {
+    flex: 1 1 240px;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 0;
+    padding: 12px 2px;
+  }
+  input[type=email]::placeholder { color: var(--fade); opacity: .75; }
+  input[type=email]:focus { outline: none; border-color: var(--heat); }
+  button {
+    flex: 0 0 auto;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .09em;
+    color: var(--paper);
+    background: var(--ink);
+    border: 0;
+    border-radius: 0;
+    padding: 15px 26px;
+    cursor: pointer;
+    transition: background-color 120ms steps(2, end);
+  }
+  button:hover, button:focus-visible { background: var(--heat); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .55; cursor: default; }
+  .hp { position: absolute; left: -5000px; width: 1px; height: 1px; }
+  #msg {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fade);
+    margin: 18px 0 0;
+    min-height: 1em;
+  }
+  #msg.ok { color: var(--ink); }
+  #msg.err { color: var(--heat-text); }
+
+  footer { margin-top: clamp(100px, 16vh, 190px); padding: 0 28px 30px; }
+  footer .frow { border-top: 1px dashed var(--hair); padding-top: 16px; }
+  .tear {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 46px;
+    color: var(--fade);
+    font-size: 13px;
+  }
+  .tear::after { content: ""; flex: 1; border-top: 2px dashed var(--hair); }
+  .copy {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .32em;
+    color: var(--fade);
+    text-align: center;
+    margin: 20px 0 4px;
+  }
+
+  @media (max-width: 700px) {
+    .rules { grid-template-columns: 1fr; gap: 34px; }
+    header, footer { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (max-width: 480px) {
+    button { flex: 1 1 100%; padding: 16px; }
+    .est { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="heat" aria-hidden="true"></canvas>
+<div class="sheet">
+  <header>
+    <span>N.Y.C.C. <span class="est">— EST. 2026</span></span>
+    <span class="live"><span class="dot"></span>OPEN 24 HRS · <span id="temp">68.4°F</span></span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="kicker">MEMBERS' POOL — FIVE BOROUGHS</p>
+      <h1>New York<br>Compute<br>Club</h1>
+      <p class="sub">Indie hackers pooling GPUs to train and serve models. Your&nbsp;4090 sleeps twenty hours a day. Hardware you can bike&nbsp;to.</p>
+      <p class="hint">printed on thermal paper — rub to develop</p>
+    </section>
+
+    <section class="stats" aria-label="club stats">
+      MEMBERS 27 · GPUS 41 · POOLED VRAM 2.1 TB · CLOUD BILL <b>$0</b>
+    </section>
+
+    <section class="rules" aria-label="how it works">
+      <div><i>01</i><b>Pool in</b><p>Your GPU joins the rack while you sleep.</p></div>
+      <div><i>02</i><b>Pool out</b><p>Train and serve on everyone's silicon.</p></div>
+      <div><i>03</i><b>Show up</b><p>First Thursdays, in person. Bring a benchmark.</p></div>
+    </section>
+
+    <section class="invite">
+      <p class="lead">Membership moves by referral. This works too.</p>
+      <form id="join" action="/api/subscribe" method="post">
+        <div class="row">
+          <input type="email" name="email" required placeholder="you@wherever.nyc"
+                 autocomplete="email" inputmode="email" aria-label="your email">
+          <input type="text" name="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button type="submit">GET ON THE LIST</button>
+        </div>
+      </form>
+      <p id="msg" role="status">replies are slow — training runs come first.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="frow">
+      <span>NO CLOUD — JUST OTHER PEOPLE'S APARTMENTS.</span>
+      <span>40.7128° N · 74.0060° W</span>
+    </div>
+    <div class="tear" aria-hidden="true">✂</div>
+    <div class="copy">CUSTOMER COPY</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- thermal paper engine ----------
+     A heat field lives over the whole document. Pointer movement warms it,
+     heat diffuses and cools, and wherever the paper is warm enough, hidden
+     roster ink develops (plus a faint scorch). Everything is document-space,
+     so developed ink scrolls with the page. */
+
+  const ROSTER = [
+    '2× RTX 4090 — RIDGEWOOD',
+    'A6000 — SUNSET PARK',
+    '3090 TI (NVLINK) — BED-STUY',
+    'M3 ULTRA 192 GB — CHINATOWN',
+    "H100 (DON'T ASK) — LONG ISLAND CITY",
+    'V100 (LOUD) — GOWANUS — DOWN: LANDLORD',
+    '4070 SUPER — INWOOD',
+    '7900 XTX — MOTT HAVEN',
+    'STATEN ISLAND — SORRY',
+    'FIRST THURSDAYS. ASK AROUND.',
+    'THE PASSWORD IS THE WIFI PASSWORD',
+  ];
+
+  const CELL = 12;                      // heat cell size, CSS px
+  const INK_FONT = '600 12.5px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+  const INK = [29, 24, 16];
+  const SCORCH = [255, 78, 0];
+
+  const canvas = document.getElementById('heat');
+  const ctx = canvas.getContext('2d');
+  const tempEl = document.getElementById('temp');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+
+  let vw = 0, vh = 0, docH = 0, cols = 0, rows = 0;
+  let heat, heatNext, heatTotal = 0;
+  let placed = [];
+  let running = false, warmed = false, frames = 0;
+
+  const maskC = document.createElement('canvas');
+  const scorchC = document.createElement('canvas');
+  const inkC = document.createElement('canvas');
+  let maskD, scorchD;
+  const mctx = maskC.getContext('2d');
+  const sctx = scorchC.getContext('2d');
+  const ictx = inkC.getContext('2d');
+
+  function resize() {
+    vw = innerWidth;
+    vh = innerHeight;
+    docH = document.documentElement.scrollHeight;
+    cols = Math.max(8, Math.ceil(vw / CELL));
+    rows = Math.max(8, Math.ceil(docH / CELL));
+    heat = new Float32Array(cols * rows);
+    heatNext = new Float32Array(cols * rows);
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    inkC.width = canvas.width;
+    inkC.height = canvas.height;
+    maskC.width = scorchC.width = cols;
+    maskC.height = scorchC.height = rows;
+    maskD = mctx.createImageData(cols, rows);
+    scorchD = sctx.createImageData(cols, rows);
+    const m = maskD.data, s = scorchD.data;
+    for (let i = 0; i < cols * rows; i++) {
+      m[i * 4] = INK[0]; m[i * 4 + 1] = INK[1]; m[i * 4 + 2] = INK[2];
+      s[i * 4] = SCORCH[0]; s[i * 4 + 1] = SCORCH[1]; s[i * 4 + 2] = SCORCH[2];
+    }
+    placeInk();
+    if (reduced) drawReduced();
+  }
+
+  /* Scatter roster entries in whitespace as short two-line receipt stamps
+     (gear on top, neighborhood below) so they fit the margins. Measure every
+     visible text block and only accept spots that clear them and each other.
+     The first few entries prefer the hero band — where people rub first. */
+  const LINE_H = 17;
+  function placeInk() {
+    ictx.setTransform(1, 0, 0, 1, 0, 0);
+    ictx.font = INK_FONT;
+    const pad = 18;
+    const blocks = [];
+    document.querySelectorAll('header, footer .frow, .tear, .copy, h1, p, form, .stats, .rules > div')
+      .forEach(el => {
+        const r = el.getBoundingClientRect();
+        blocks.push({
+          x: r.left + scrollX - pad, y: r.top + scrollY - pad,
+          w: r.width + pad * 2, h: r.height + pad * 2,
+        });
+      });
+    const hits = (a, list) => list.some(b =>
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
+
+    const statsTop = document.querySelector('.stats').getBoundingClientRect().top + scrollY;
+    const wholeDoc = { ymin: 66, ymax: docH - 160, tries: 320 };
+    const heroBand = { ymin: 66, ymax: statsTop - 30, tries: 140 };
+
+    placed = [];
+    ROSTER.forEach((s, idx) => {
+      const parts = s.split(' — ');
+      const lines = parts.length > 1 ? [parts[0], parts.slice(1).join(' — ')] : [s];
+      const w = Math.max(...lines.map(l => ictx.measureText(l).width));
+      const h = lines.length * LINE_H;
+      const zones = idx < 4 ? [heroBand, wholeDoc] : [wholeDoc];
+      for (const z of zones) {
+        let done = false;
+        for (let i = 0; i < z.tries && !done; i++) {
+          const x = 12 + Math.random() * Math.max(10, vw - 24 - w);
+          const y = z.ymin + Math.random() * Math.max(10, z.ymax - z.ymin - h);
+          const box = { x: x - 8, y: y - 8, w: w + 16, h: h + 16 };
+          if (!hits(box, blocks) && !hits(box, placed.map(p => p.box))) {
+            placed.push({ lines, x, y, rot: (Math.random() - .5) * .045, box });
+            done = true;
+          }
+        }
+        if (done) break;
+      }
+    });
+    placed.sort((a, b) => a.y - b.y);
+    window.__nycc = { placed };
+  }
+
+  function splat(px, py, strength = .8, radius = 3.4) {
+    const cx = px / CELL, cy = py / CELL;
+    const r = Math.ceil(radius);
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const gx = Math.round(cx + dx), gy = Math.round(cy + dy);
+        if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) continue;
+        const d = Math.hypot(cx - gx, cy - gy);
+        if (d < radius) {
+          const i = gy * cols + gx;
+          heat[i] = Math.min(1.25, heat[i] + (1 - d / radius) * strength);
+        }
+      }
+    }
+    warmed = true;
+    wake();
+  }
+
+  function step() {
+    heatTotal = 0;
+    for (let y = 0; y < rows; y++) {
+      const up = y > 0 ? y - 1 : y, dn = y < rows - 1 ? y + 1 : y;
+      for (let x = 0; x < cols; x++) {
+        const lf = x > 0 ? x - 1 : x, rt = x < cols - 1 ? x + 1 : x;
+        const i = y * cols + x;
+        const n = (heat[up * cols + x] + heat[dn * cols + x] +
+                   heat[y * cols + lf] + heat[y * cols + rt]) * .25;
+        const t = (heat[i] * .88 + n * .12) * .9885;
+        heatNext[i] = t > .0004 ? t : 0;
+        heatTotal += heatNext[i];
+      }
+    }
+    [heat, heatNext] = [heatNext, heat];
+  }
+
+  function draw() {
+    const m = maskD.data, s = scorchD.data;
+    for (let i = 0; i < cols * rows; i++) {
+      const t = heat[i];
+      let a = (t - .06) / .3;
+      a = a < 0 ? 0 : a > 1 ? 1 : a;
+      m[i * 4 + 3] = (a * (2 - a)) * 255;
+      s[i * 4 + 3] = Math.min(40, t * 44);
+    }
+    mctx.putImageData(maskD, 0, 0);
+    sctx.putImageData(scorchD, 0, 0);
+
+    const sy = scrollY / CELL, sh = vh / CELL, sw = vw / CELL;
+
+    ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ictx.globalCompositeOperation = 'source-over';
+    ictx.clearRect(0, 0, vw, vh);
+    ictx.font = INK_FONT;
+    ictx.fillStyle = 'rgb(' + INK.join(',') + ')';
+    ictx.textBaseline = 'top';
+    for (const p of placed) {
+      const y = p.y - scrollY;
+      if (y < -60 || y > vh + 60) continue;
+      ictx.save();
+      ictx.translate(p.x, y);
+      ictx.rotate(p.rot);
+      p.lines.forEach((l, i) => ictx.fillText(l, 0, i * LINE_H));
+      ictx.restore();
+    }
+    ictx.globalCompositeOperation = 'destination-in';
+    ictx.setTransform(1, 0, 0, 1, 0, 0);
+    ictx.drawImage(maskC, 0, sy, sw, sh, 0, 0, inkC.width, inkC.height);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(scorchC, 0, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(inkC, 0, 0);
+  }
+
+  function frame() {
+    step();
+    draw();
+    if (++frames % 12 === 0) {
+      tempEl.textContent = (68.4 + Math.min(35.4, heatTotal * .09)).toFixed(1) + '°F';
+    }
+    if (heatTotal > .5) requestAnimationFrame(frame);
+    else {
+      running = false;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      tempEl.textContent = '68.4°F';
+    }
+  }
+
+  function wake() {
+    if (!running && !reduced) {
+      running = true;
+      requestAnimationFrame(frame);
+    }
+  }
+
+  /* Reduced motion: no simulation — the roster is simply printed, faint. */
+  function drawReduced() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, vw, vh);
+    ctx.font = INK_FONT;
+    ctx.fillStyle = 'rgba(29,24,16,.5)';
+    ctx.textBaseline = 'top';
+    for (const p of placed) {
+      const y = p.y - scrollY;
+      if (y < -60 || y > vh + 60) continue;
+      ctx.save(); ctx.translate(p.x, y); ctx.rotate(p.rot);
+      p.lines.forEach((l, i) => ctx.fillText(l, 0, i * LINE_H));
+      ctx.restore();
+    }
+  }
+
+  addEventListener('pointermove', e => { if (!reduced) splat(e.pageX, e.pageY); }, { passive: true });
+  addEventListener('pointerdown', e => { if (!reduced) splat(e.pageX, e.pageY, .9, 4); }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (!reduced && e.touches[0]) {
+      const t = e.touches[0];
+      splat(t.clientX + scrollX, t.clientY + scrollY, .6, 3.4);
+    }
+  }, { passive: true });
+  addEventListener('scroll', () => {
+    if (reduced) requestAnimationFrame(drawReduced);
+  }, { passive: true });
+
+  let rt;
+  addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
+
+  /* The page demos itself once: a warm finger drags across the first
+     hidden roster line ~1.5s after load. */
+  function bloom() {
+    if (warmed || reduced || !placed.length) return;
+    const p = placed.find(q => q.y > scrollY) || placed[0];
+    const width = Math.min(p.box.w, vw - p.x - 20);
+    const cy = p.y + (p.lines.length * LINE_H) / 2;
+    let i = 0;
+    const n = 14;
+    const iv = setInterval(() => {
+      splat(p.x + (i / n) * width, cy, .85, 4);
+      if (++i > n) clearInterval(iv);
+    }, 46);
+  }
+
+  resize();
+  setTimeout(bloom, 1500);
+
+  /* ---------- signup ---------- */
+  const form = document.getElementById('join');
+  const msg = document.getElementById('msg');
+  const btn = form.querySelector('button');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = form.email.value.trim();
+    if (!email) return;
+    btn.disabled = true;
+    msg.className = '';
+    msg.textContent = 'printing…';
+    try {
+      const r = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, company: form.company.value }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        msg.className = 'ok';
+        msg.textContent = d.message + ' — see you on a first thursday.';
+        form.reset();
+        const fr = form.getBoundingClientRect();
+        for (let i = 0; i < 5; i++) {
+          splat(fr.left + scrollX + Math.random() * fr.width,
+                fr.top + scrollY + fr.height / 2 + (Math.random() - .5) * 60, 1, 5);
+        }
+      } else {
+        msg.className = 'err';
+        msg.textContent = d.error || 'the printer jammed. try again.';
+      }
+    } catch {
+      msg.className = 'err';
+      msg.textContent = 'printer offline — try again in a bit.';
+    }
+    btn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
