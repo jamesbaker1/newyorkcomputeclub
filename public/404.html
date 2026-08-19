@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- you took a wrong turn. it happens. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0E0C0A">
+<title>wrong borough &middot; new york compute club</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper: #0E0C0A;
+    --ink: #EDE6DA;
+    --heat: #FF4E00;
+    --heat-text: #FF8A4A;
+    --fade: #8E8472;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  ::selection { background: var(--heat); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--heat); outline-offset: 3px; }
+  .col { max-width: 460px; }
+  .code {
+    font-size: 11.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--fade);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+    line-height: 1.1;
+    font-weight: 400;
+    margin: 0 0 20px;
+  }
+  p { color: #C9C1B2; line-height: 1.7; margin: 0 0 24px; font-size: 14px; }
+  a {
+    color: var(--heat-text);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,138,74,.5);
+    padding-bottom: 1px;
+  }
+  a:hover, a:focus-visible { border-color: var(--heat); }
+</style>
+</head>
+<body>
+  <div class="col">
+    <p class="code">404 &middot; wrong borough</p>
+    <h1>there's nothing racked here.</h1>
+    <p>whatever you were looking for isn't at this address. the city is
+    back that way.</p>
+    <p><a href="/">&larr; the city</a>&ensp;&ensp;<a href="/about">about</a></p>
+  </div>
+</body>
+</html>

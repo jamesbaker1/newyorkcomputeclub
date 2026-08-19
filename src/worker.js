@@ -12,15 +12,32 @@ function json(body, status = 200) {
   });
 }
 
+// Best-effort per-IP throttle. KV is eventually consistent, so this bounds
+// abuse rather than proving a hard limit; the honeypot does the heavy lifting.
+const RL_MAX = 20;
+const RL_WINDOW_S = 3600;
+async function overRateLimit(request, env) {
+  if (!env.SIGNUPS) return false;
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!ip) return false;
+  const key = 'rl:' + ip;
+  const n = Number((await env.SIGNUPS.get(key)) || 0);
+  if (n >= RL_MAX) return true;
+  await env.SIGNUPS.put(key, String(n + 1), { expirationTtl: RL_WINDOW_S });
+  return false;
+}
+
 async function subscribe(request, env) {
   let email = '';
   let honeypot = '';
+  let via = 'form';
   try {
     const type = request.headers.get('content-type') || '';
     if (type.includes('application/json')) {
       const body = await request.json();
       email = body.email || '';
       honeypot = body.company || '';
+      if (body.via === 'console') via = 'console';
     } else {
       const form = await request.formData();
       email = form.get('email') || '';
@@ -42,6 +59,10 @@ async function subscribe(request, env) {
     return json({ ok: false, error: 'the list is not wired up yet' }, 500);
   }
 
+  if (await overRateLimit(request, env)) {
+    return json({ ok: false, error: 'slow down. try later.' }, 429);
+  }
+
   // Not atomic (KV), so a double submit can reach the put twice; keeping the
   // stored first-seen timestamp is what makes that harmless.
   const prior = await env.SIGNUPS.get(email, 'json');
@@ -54,10 +75,14 @@ async function subscribe(request, env) {
     JSON.stringify({
       ts: new Date().toISOString(),
       country: request.cf?.country || '',
+      via,
     })
   );
 
-  return json({ ok: true, already: false, message: 'application received. we answer slowly.' });
+  const message = via === 'console'
+    ? 'application received, and noted: you read the source.'
+    : 'application received. we answer slowly.';
+  return json({ ok: true, already: false, message });
 }
 
 // The about page's pilot light reads this instead of pretending. The grid
@@ -71,10 +96,33 @@ async function gridStatus() {
     if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
     const alive = (data.nodes || []).filter(n => n.alive);
+    // kind defaults to "member" so this stays correct against v1 records that
+    // predate the member/walk-in split.
+    const walkins = alive.filter(n => n.kind === 'walk-in').length;
     return json({
       ok: true,
       nodes: alive.length,
-      watts: alive.reduce((w, n) => w + (Number(n.wattage) || 0), 0),
+      members: alive.length - walkins,
+      walkins,
+      watts: Math.round(alive.reduce((w, n) => w + (Number(n.wattage) || 0), 0) * 10) / 10,
+    });
+  } catch {
+    return json({ ok: false }, 502);
+  }
+}
+
+// The richer feed for the /grid dashboard: proxies the coordinator's own
+// aggregate. Returns 502 until the coordinator ships /v1/stats, so the page
+// degrades to the lighter /api/grid.
+async function gridStats() {
+  try {
+    const res = await fetch('https://grid.newyorkcomputeclub.com/v1/stats', {
+      cf: { cacheTtl: 20, cacheEverything: true },
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    return new Response(await res.text(), {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=utf-8' },
     });
   } catch {
     return json({ ok: false }, 502);
@@ -140,13 +188,23 @@ export default {
     if (url.pathname === '/api/grid' && request.method === 'GET') {
       return gridStatus();
     }
+    if (url.pathname === '/api/stats' && request.method === 'GET') {
+      return gridStats();
+    }
     if (url.pathname === '/api/digest' && request.method === 'GET') {
       if (!env.DIGEST_KEY || request.headers.get('x-digest-key') !== env.DIGEST_KEY) {
         return json({ ok: false, error: 'no' }, 403);
       }
       return json({ ok: true, ...(await runDigest(env)) });
     }
-    return env.ASSETS.fetch(request);
+
+    const res = await env.ASSETS.fetch(request);
+    // Serve the club's own 404 for missing pages, not the platform default.
+    if (res.status === 404 && (request.headers.get('accept') || '').includes('text/html')) {
+      const page = await env.ASSETS.fetch(new URL('/404.html', url));
+      if (page.ok) return new Response(page.body, { status: 404, headers: page.headers });
+    }
+    return res;
   },
 
   async scheduled(_event, env, ctx) {

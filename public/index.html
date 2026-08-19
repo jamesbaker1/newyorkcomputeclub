@@ -186,7 +186,6 @@
   <main>
     <h1>New York<br>Compute Club</h1>
     <p class="tag">pooled gpus. five boroughs. hardware you can bike to.</p>
-    <p class="tag" id="gridline" hidden></p>
 
     <form id="join" novalidate>
       <div class="row">
@@ -208,15 +207,36 @@
 
 <script>
 // ------------------------------------------------------------------ the grid
-// real numbers when the grid has nodes; the scene reads window.__grid too.
+// the scene leans on real wattage via window.__grid; the visible count is
+// held back for now (the grid is one node and that is not the flex yet).
 fetch('/api/grid').then(r => r.ok ? r.json() : null).then(g => {
-  if (!g || !g.ok || !g.nodes) return;
-  window.__grid = g;
-  const el = document.getElementById('gridline');
-  el.textContent = 'grid: ' + g.nodes + (g.nodes === 1 ? ' node' : ' nodes') +
-    ' · ' + g.watts + ' watts';
-  el.hidden = false;
+  if (g && g.ok && g.nodes) window.__grid = g;
 }).catch(() => {});
+
+// ---------------------------------------------------------------- the door
+// for the kind of person who opens the console on a landing page.
+console.log(
+  '%capply from here if you like: %cjoin("you@example.com")',
+  'color:#7A7160', 'color:#FF8A4A;font-weight:bold'
+);
+window.join = async (email) => {
+  if (typeof email !== 'string' || !email.includes('@')) {
+    console.log('an email, roughly: join("you@example.com")');
+    return;
+  }
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), via: 'console' }),
+    });
+    const data = await res.json();
+    console.log('%c' + (data.ok ? data.message : data.error), 'color:#FF8A4A');
+    if (data.ok) window.__surge && window.__surge();
+  } catch {
+    console.log('network said no. try again.');
+  }
+};
 
 // ---------------------------------------------------------------- the list
 const form = document.getElementById('join');
