@@ -10,6 +10,8 @@
 <meta property="og:title" content="about &middot; new york compute club">
 <meta property="og:description" content="still taking applications.">
 <meta property="og:url" content="https://newyorkcomputeclub.com/about">
+<meta property="og:image" content="https://newyorkcomputeclub.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
 <style>
   @font-face {
@@ -185,7 +187,7 @@
 <div class="col">
   <nav>
     <a href="/">&larr; the city</a>
-    <span class="pilot"></span>
+    <span id="grid"><span class="pilot"></span></span>
   </nav>
 
   <h1>Still taking<br>applications</h1>
@@ -252,6 +254,16 @@
 </div>
 
 <script>
+// the pilot light reports the grid, not a css animation's opinion of it.
+fetch('/api/grid').then(r => r.ok ? r.json() : null).then(g => {
+  if (!g || !g.ok || !g.nodes) return;
+  const el = document.getElementById('grid');
+  const label = document.createTextNode(
+    g.nodes + (g.nodes === 1 ? ' node on the grid ' : ' nodes on the grid ')
+  );
+  el.insertBefore(label, el.firstChild);
+}).catch(() => {});
+
 const form = document.getElementById('apply');
 const input = document.getElementById('email');
 const status = document.getElementById('status');

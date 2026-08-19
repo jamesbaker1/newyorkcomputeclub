@@ -60,11 +60,35 @@ async function subscribe(request, env) {
   return json({ ok: true, already: false, message: 'application received. we answer slowly.' });
 }
 
+// The about page's pilot light reads this instead of pretending. The grid
+// coordinator is public read-only, but proxying keeps the page same-origin
+// and lets the edge cache absorb the traffic.
+async function gridStatus() {
+  try {
+    const res = await fetch('https://grid.newyorkcomputeclub.com/v1/nodes', {
+      cf: { cacheTtl: 30, cacheEverything: true },
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    const alive = (data.nodes || []).filter(n => n.alive);
+    return json({
+      ok: true,
+      nodes: alive.length,
+      watts: alive.reduce((w, n) => w + (Number(n.wattage) || 0), 0),
+    });
+  } catch {
+    return json({ ok: false }, 502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api/subscribe' && request.method === 'POST') {
       return subscribe(request, env);
+    }
+    if (url.pathname === '/api/grid' && request.method === 'GET') {
+      return gridStatus();
     }
     return env.ASSETS.fetch(request);
   },
