@@ -1,16 +1,17 @@
 name = "newyorkcomputeclub"
 main = "src/worker.js"
 compatibility_date = "2026-08-01"
+workers_dev = true
+
+routes = [
+  { pattern = "newyorkcomputeclub.com", custom_domain = true },
+  { pattern = "www.newyorkcomputeclub.com", custom_domain = true },
+]
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
 
-# The email list. Create it once:
-#   npx wrangler kv namespace create SIGNUPS
-# then paste the id it prints below and uncomment both lines. Until then,
-# the site deploys fine and signups answer "list is not wired up yet".
-#
-# [[kv_namespaces]]
-# binding = "SIGNUPS"
-# id = "PASTE_KV_NAMESPACE_ID_HERE"
+[[kv_namespaces]]
+binding = "SIGNUPS"
+id = "bf7443c719ec4cd585a7690f699a1dca"

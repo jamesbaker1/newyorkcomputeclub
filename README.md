@@ -2,35 +2,35 @@
 
 Pooled GPUs. Five boroughs. Hardware you can bike to.
 
-One dark page (`public/index.html`), zero dependencies.
-Rub it — compute is heat, heat is light.
+One dark page. Manhattan rendered live as a compute-load histogram —
+one instanced box per lot, height = load, Central Park and Broadway
+carved out of the grid. Heat roams the island on its own; your cursor
+overrides it. Joining the list makes the city surge.
+
+Live at [newyorkcomputeclub.com](https://newyorkcomputeclub.com).
 
 ## Layout
 
 - `public/index.html` — the whole site. No build step, no frameworks.
+- `public/vendor/` — self-hosted three.js (pinned 0.170.0, MIT).
 - `public/fonts/` — self-hosted Anton (SIL OFL).
-- `src/worker.js` — Cloudflare Worker; serves `public/` and handles `POST /api/subscribe` into KV.
-- `wrangler.toml` — Worker config: static assets + KV binding.
+- `src/worker.js` — Cloudflare Worker; serves `public/` and handles
+  `POST /api/subscribe` into KV (honeypot, dedupe, timestamp + country).
+- `wrangler.toml` — Worker config: static assets, KV binding, custom domains.
 
-## Deploy (Cloudflare Workers)
+## Deploy
 
-The repo deploys with plain `npx wrangler deploy` — which is exactly what
-Cloudflare's git integration (Workers Builds) runs. Connect the repo and it
-ships as-is; signups answer "list is not wired up yet" until KV exists.
+```sh
+npx wrangler deploy
+```
 
-To turn the list on:
-
-1. ```sh
-   npx wrangler kv namespace create SIGNUPS
-   ```
-2. Paste the printed `id` into `wrangler.toml` and uncomment the
-   `[[kv_namespaces]]` block.
-3. Push (or `npx wrangler deploy`).
+That's the whole pipeline. Custom domains (`newyorkcomputeclub.com`, `www`)
+are declared in `wrangler.toml` and provisioned on deploy.
 
 ### Read the list
 
 ```sh
-npx wrangler kv key list --namespace-id <your-namespace-id> --remote
+npx wrangler kv key list --binding SIGNUPS --remote
 ```
 
 Each key is an email; each value has a signup timestamp and country.
