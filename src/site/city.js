@@ -95,14 +95,15 @@ function buildCity() {
       if (!(inBQ(x, z) || inBronx(x, z) || inSI(x, z))) continue;
       const r = hash(x * 2, z * 2);
       let base =
-        0.22 +
-        1.6 * gauss2(x - 14, z + 27, 2.5) +   // downtown brooklyn
-        0.9 * gauss2(x - 15, z + 18.5, 2.0) + // williamsburg waterfront
-        1.9 * gauss2(x - 16, z - 1, 2.2) +    // long island city
-        0.6 * gauss2(x - 2, z - 44, 3.0) +    // south bronx
+        0.34 +
+        1.1 * gauss2(x - 22, z + 2, 15) +     // broad brooklyn + queens swell
+        2.8 * gauss2(x - 14, z + 27, 3.0) +   // downtown brooklyn
+        1.5 * gauss2(x - 15, z + 18.5, 2.2) + // williamsburg waterfront
+        2.9 * gauss2(x - 16, z - 1, 2.6) +    // long island city
+        0.7 * gauss2(x - 2, z - 44, 3.0) +    // south bronx
         0.5 * gauss2(x + 20, z + 46, 2.0);    // st. george
-      base *= 0.75 + 0.5 * r;
-      if (r > 0.995) base *= 1.6;
+      base *= 0.78 + 0.5 * r;
+      if (r > 0.993) base *= 1.7;             // the odd outer-borough tower
       lots.push({ x, z, r, base, fp: 0.72 + 0.26 * r, fp2: 0.72 + 0.26 * hash(z * 2, x * 2), outer: true });
     }
   }
@@ -366,7 +367,7 @@ function buildCity() {
       m4.setPosition(L.x, 0, L.z);
       mesh.setMatrixAt(i, m4);
 
-      const g = (L.outer ? 0.21 : 0.30) + 0.16 * L.r;
+      const g = (L.outer ? 0.27 : 0.30) + 0.16 * L.r;
       col.setRGB(g * 1.06, g * 0.97, g * 0.85);
       const warm = Math.min(1, hot * 0.9 + kickHeat * 0.8 + pulse * 0.35 + Math.max(0, load - 0.72) * 0.9);
       col.lerp(heatCol, warm);
