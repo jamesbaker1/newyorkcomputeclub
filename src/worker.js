@@ -79,6 +79,26 @@ async function subscribe(request, env) {
     })
   );
 
+  // tell the owner right away, best effort: a failed send must never fail a signup.
+  // the daily digest still runs and stays the source of truth; this is just faster.
+  if (env.OWNER_EMAIL) {
+    try {
+      const raw = [
+        'From: the club <digest@newyorkcomputeclub.com>',
+        'To: james.baker1628@gmail.com',
+        `Subject: new application: ${email}`,
+        `Message-ID: <${crypto.randomUUID()}@newyorkcomputeclub.com>`,
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        `${email}  (via ${via}${request.cf?.country ? ', ' + request.cf.country : ''})`,
+      ].join('\r\n');
+      const { EmailMessage } = await import('cloudflare:email');
+      await env.OWNER_EMAIL.send(
+        new EmailMessage('digest@newyorkcomputeclub.com', 'james.baker1628@gmail.com', raw)
+      );
+    } catch {}
+  }
+
   const message = via === 'console'
     ? 'application received, and noted: you read the source.'
     : 'application received. we answer slowly.';
