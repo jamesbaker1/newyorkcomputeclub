@@ -31,7 +31,7 @@ async function subscribe(request, env) {
   }
 
   // Bots fill the hidden "company" field; pretend it worked and drop it.
-  if (honeypot) return json({ ok: true, message: 'you are on the list' });
+  if (honeypot) return json({ ok: true, already: false, message: 'application received. we answer slowly.' });
 
   email = String(email).trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 254) {
@@ -39,11 +39,14 @@ async function subscribe(request, env) {
   }
 
   if (!env.SIGNUPS) {
-    return json({ ok: false, error: 'list is not wired up yet' }, 500);
+    return json({ ok: false, error: 'the list is not wired up yet' }, 500);
   }
 
-  if (await env.SIGNUPS.get(email)) {
-    return json({ ok: true, message: 'already on the list' });
+  // Not atomic (KV), so a double submit can reach the put twice; keeping the
+  // stored first-seen timestamp is what makes that harmless.
+  const prior = await env.SIGNUPS.get(email, 'json');
+  if (prior) {
+    return json({ ok: true, already: true, message: 'you already applied. patience.' });
   }
 
   await env.SIGNUPS.put(
@@ -54,7 +57,7 @@ async function subscribe(request, env) {
     })
   );
 
-  return json({ ok: true, message: 'you are on the list' });
+  return json({ ok: true, already: false, message: 'application received. we answer slowly.' });
 }
 
 export default {

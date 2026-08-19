@@ -1,0 +1,12 @@
+{
+  "name": "newyorkcomputeclub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/site/city.js --bundle --minify --format=esm --legal-comments=none --outfile=public/js/city.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "three": "0.170.0"
+  }
+}

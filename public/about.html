@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0E0C0A">
+<title>about &middot; new york compute club</title>
+<meta name="description" content="still taking applications.">
+<meta property="og:title" content="about &middot; new york compute club">
+<meta property="og:description" content="still taking applications.">
+<meta property="og:url" content="https://newyorkcomputeclub.com/about">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<style>
+  @font-face {
+    font-family: 'Anton';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/anton-latin.woff2') format('woff2');
+  }
+  :root {
+    --paper: #0E0C0A;
+    --ink: #EDE6DA;
+    --heat: #FF4E00;
+    --heat-text: #FF8A4A;
+    --fade: #8E8472;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html { overscroll-behavior: none; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.75;
+    letter-spacing: .01em;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  ::selection { background: var(--heat); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--heat); outline-offset: 3px; }
+
+  .col {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 26px 24px 90px;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+    margin-bottom: 72px;
+  }
+  a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(122,113,96,.5); padding-bottom: 1px; }
+  a:hover, a:focus-visible { color: var(--heat-text); border-color: var(--heat); }
+  nav a { border-bottom-color: transparent; }
+  nav a:hover, nav a:focus-visible { border-bottom-color: var(--heat); }
+  /* visual size stays; the touch boxes grow to ~44px */
+  nav a, footer a { padding: 14px; margin: -14px; }
+
+  .pilot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--heat);
+    vertical-align: baseline;
+    animation: breathe 4.2s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .pilot { animation: none; } }
+  @keyframes breathe {
+    0%, 100% { opacity: .45; transform: scale(.85); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  h1 {
+    font-family: 'Anton', 'Arial Narrow', var(--sans);
+    font-size: clamp(2.9rem, 11vw, 5.4rem);
+    font-weight: 400;
+    line-height: .9;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    margin: 0 0 64px;
+  }
+  h2 {
+    font-size: 11.5px;
+    font-weight: 400;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--fade);
+    margin: 64px 0 18px;
+  }
+  p { margin: 0 0 18px; }
+  .col > p, li { color: #C9C1B2; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  ol {
+    margin: 0; padding: 0;
+    list-style: none;
+    counter-reset: rule;
+  }
+  ol li {
+    counter-increment: rule;
+    padding-left: 34px;
+    position: relative;
+    margin-bottom: 10px;
+  }
+  ol li::before {
+    content: counter(rule) ".";
+    position: absolute;
+    left: 0;
+    color: var(--fade);
+  }
+
+  .repos { margin: 0; padding: 0; list-style: none; }
+  .repos li { margin-bottom: 14px; padding-left: 0; }
+  .repos li::before { content: none; }
+  .repos .what { color: var(--fade); }
+
+  form { margin-top: 26px; }
+  .row { display: flex; gap: 14px; }
+  input[type=email] {
+    flex: 1 1 200px;
+    min-width: 0;
+    max-width: 320px;
+    font-family: var(--mono);
+    font-size: 16px; /* under 16px, iOS zooms the page on focus */
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 0;
+    padding: 12px 2px;
+  }
+  input[type=email]::placeholder { color: var(--fade); }
+  input[type=email]:focus { outline: none; border-color: var(--heat); }
+  button {
+    flex: 0 0 auto;
+    padding: 0 22px;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: .08em;
+    color: var(--paper);
+    background: var(--ink);
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:hover, button:focus-visible { background: var(--heat); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .55; cursor: default; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  #status {
+    display: block;
+    min-height: 1.4em;
+    margin-top: 14px;
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--heat-text);
+  }
+
+  footer {
+    margin-top: 96px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(237,230,218,.14);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px 24px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+  }
+</style>
+</head>
+<body>
+<div class="col">
+  <nav>
+    <a href="/">&larr; the city</a>
+    <span class="pilot"></span>
+  </nav>
+
+  <h1>Still taking<br>applications</h1>
+
+  <p>the club is a pooled gpu cluster that lives in new york. members rack
+  their own hardware: apartments, offices, one basement in red hook. the club
+  schedules jobs across all of it. you bring a card or you bring a workload.
+  ideally both.</p>
+
+  <p>the pitch is an old rule with new nouns: <strong>not your compute, not
+  your model.</strong> weights you rent live in someone else's building,
+  behind someone else's key. the price changes with their mood. the club's
+  answer is literal: own the building. every node is member hardware inside
+  the city limits. jobs move between nodes sealed: the scheduler sees
+  ciphertext and a wattage number, and the node that runs your job can read
+  your job, which is why you pick your node.</p>
+
+  <p>the rule has a v2, for later: <strong>not your power, not your
+  model.</strong> the red hook basement already votes yes.</p>
+
+  <p>the longer argument is written down:
+  <a href="https://deskofjim.com/blog/compute/">not your compute, not your model</a>.</p>
+
+  <h2>house rules</h2>
+  <ol>
+    <li>nobody asks what you're running.</li>
+    <li>heat is a feature. we will find a use for yours.</li>
+    <li>no mining. we're not saying it again.</li>
+    <li>if your node goes down, you owe the group chat an explanation.</li>
+  </ol>
+
+  <h2>the software</h2>
+  <p>everything is built in the open and none of it is finished:</p>
+  <ul class="repos">
+    <li><a href="https://github.com/jamesbaker1/nycc-engine">nycc-engine</a>
+      <span class="what">&middot; the inference engine every node runs.</span></li>
+    <li><a href="https://github.com/jamesbaker1/nycc-grid">nycc-grid</a>
+      <span class="what">&middot; the mesh: scheduling, sealed jobs, an untrusted coordinator.</span></li>
+    <li><a href="https://github.com/jamesbaker1/newyorkcomputeclub">newyorkcomputeclub</a>
+      <span class="what">&middot; this website, manhattan included.</span></li>
+  </ul>
+  <p>a good pull request moves your application up the pile.</p>
+
+  <h2>applying</h2>
+  <p>membership is small on purpose, and there's no form beyond this one.
+  leave an email. we read everything and answer slowly. it helps if you've
+  trained something, broken something, or own something with a fan.</p>
+
+  <form id="apply" novalidate>
+    <div class="row">
+      <label class="hp" for="email">email</label>
+      <input id="email" name="email" type="email" placeholder="email" autocomplete="email" spellcheck="false" required>
+      <!-- humans never see this field; bots can't resist it -->
+      <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit">apply</button>
+    </div>
+    <output id="status" role="status" aria-live="polite"></output>
+  </form>
+
+  <footer>
+    <span>instigated by <a href="https://deskofjim.com">james</a>.</span>
+    <span>a club, not a cloud.</span>
+  </footer>
+</div>
+
+<script>
+const form = document.getElementById('apply');
+const input = document.getElementById('email');
+const status = document.getElementById('status');
+const btn = form.querySelector('button');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = input.value.trim();
+  if (!email) { status.textContent = 'email first.'; input.focus(); return; }
+  btn.disabled = true;
+  status.textContent = '...';
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, company: form.company.value }),
+    });
+    const data = await res.json();
+    status.textContent = data.ok ? data.message : data.error + '.';
+    if (data.ok && !data.already) input.value = '';
+  } catch {
+    status.textContent = 'network said no. try again.';
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>
