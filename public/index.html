@@ -186,6 +186,7 @@
   <main>
     <h1>New York<br>Compute Club</h1>
     <p class="tag">pooled gpus. five boroughs. hardware you can bike to.</p>
+    <p class="tag" id="gridline" hidden></p>
 
     <form id="join" novalidate>
       <div class="row">
@@ -206,6 +207,17 @@
 </div>
 
 <script>
+// ------------------------------------------------------------------ the grid
+// real numbers when the grid has nodes; the scene reads window.__grid too.
+fetch('/api/grid').then(r => r.ok ? r.json() : null).then(g => {
+  if (!g || !g.ok || !g.nodes) return;
+  window.__grid = g;
+  const el = document.getElementById('gridline');
+  el.textContent = 'grid: ' + g.nodes + (g.nodes === 1 ? ' node' : ' nodes') +
+    ' · ' + g.watts + ' watts';
+  el.hidden = false;
+}).catch(() => {});
+
 // ---------------------------------------------------------------- the list
 const form = document.getElementById('join');
 const input = document.getElementById('email');

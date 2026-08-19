@@ -291,6 +291,9 @@ function buildCity() {
     heat.x = lerp(heat.x, heat.tx, 0.05);
     heat.z = lerp(heat.z, heat.tz, 0.05);
     pulse *= 0.965;
+    // real wattage on the grid leans on the roaming heat, gently
+    const gw = (window.__grid && window.__grid.watts) || 0;
+    const gridBoost = 1 + Math.min(1, gw / 400) * 0.3;
 
     // packets fly, nodes flare, arrivals warm the streets
     if (introT > 2.6) {
@@ -352,7 +355,7 @@ function buildCity() {
       const hot = gauss(Math.hypot(L.x - heat.x, L.z - heat.z), 3.4);
       let kickHeat = 0;
       for (const n of hotNodes) kickHeat += n.kick * gauss2(L.x - n.x, L.z - n.z, 2.6);
-      let h = Math.max(0.1, L.base * (0.30 + 0.85 * load) + hot * 2.4 + kickHeat * 1.6 + pulse * L.base * 0.55);
+      let h = Math.max(0.1, L.base * (0.30 + 0.85 * load) + hot * 2.4 * gridBoost + kickHeat * 1.6 + pulse * L.base * 0.55);
       if (rise) {
         const e = clamp01(introT * 1.15 - Math.hypot(L.x, L.z + 25) * 0.052);
         h *= e * e * (3 - 2 * e);

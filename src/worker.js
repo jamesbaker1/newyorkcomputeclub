@@ -81,6 +81,56 @@ async function gridStatus() {
   }
 }
 
+// Daily digest of new applications, mailed to the club address's owner.
+// State lives in the same KV under a key no email can collide with (the
+// subscribe validator requires an @). Runs on cron; GET /api/digest with the
+// right x-digest-key header triggers it by hand.
+const DIGEST_STATE_KEY = '__digest__';
+
+async function runDigest(env) {
+  const seen = new Set(((await env.SIGNUPS.get(DIGEST_STATE_KEY, 'json')) || {}).seen || []);
+  const emails = [];
+  let cursor;
+  do {
+    const page = await env.SIGNUPS.list({ cursor });
+    for (const k of page.keys) if (k.name.includes('@')) emails.push(k.name);
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+
+  const fresh = emails.filter(e => !seen.has(e));
+  let sent = false;
+  if (fresh.length && env.OWNER_EMAIL) {
+    const lines = [];
+    for (const e of fresh) {
+      const rec = (await env.SIGNUPS.get(e, 'json')) || {};
+      lines.push(`${e}  (${rec.ts || 'unknown time'}${rec.country ? ', ' + rec.country : ''})`);
+    }
+    const subject = `${fresh.length} new application${fresh.length === 1 ? '' : 's'}`;
+    const raw = [
+      'From: the club <digest@newyorkcomputeclub.com>',
+      'To: james.baker1628@gmail.com',
+      `Subject: ${subject}`,
+      `Message-ID: <${crypto.randomUUID()}@newyorkcomputeclub.com>`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      'new since the last digest:',
+      '',
+      ...lines,
+      '',
+      `list total: ${emails.length}`,
+      'read it all: npx wrangler kv key list --binding SIGNUPS --remote',
+    ].join('\r\n');
+    const { EmailMessage } = await import('cloudflare:email');
+    await env.OWNER_EMAIL.send(
+      new EmailMessage('digest@newyorkcomputeclub.com', 'james.baker1628@gmail.com', raw)
+    );
+    sent = true;
+  }
+
+  await env.SIGNUPS.put(DIGEST_STATE_KEY, JSON.stringify({ seen: emails }));
+  return { total: emails.length, fresh: fresh.length, sent };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -90,6 +140,16 @@ export default {
     if (url.pathname === '/api/grid' && request.method === 'GET') {
       return gridStatus();
     }
+    if (url.pathname === '/api/digest' && request.method === 'GET') {
+      if (!env.DIGEST_KEY || request.headers.get('x-digest-key') !== env.DIGEST_KEY) {
+        return json({ ok: false, error: 'no' }, 403);
+      }
+      return json({ ok: true, ...(await runDigest(env)) });
+    }
     return env.ASSETS.fetch(request);
+  },
+
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(runDigest(env));
   },
 };

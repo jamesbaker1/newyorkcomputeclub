@@ -8,6 +8,15 @@ routes = [
   { pattern = "www.newyorkcomputeclub.com", custom_domain = true },
 ]
 
+# top level on purpose: after a [table] header this would nest inside it
+send_email = [
+  { name = "OWNER_EMAIL", destination_address = "james.baker1628@gmail.com" },
+]
+
+[triggers]
+# daily application digest, 13:00 utc = morning in new york
+crons = ["0 13 * * *"]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
