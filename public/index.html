@@ -193,7 +193,7 @@
         <input id="email" name="email" type="email" placeholder="email" autocomplete="email" spellcheck="false" required>
         <!-- humans never see this field; bots can't resist it -->
         <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button type="submit" aria-label="apply">&rarr;</button>
+        <button type="submit" aria-label="send">&rarr;</button>
       </div>
       <output id="status" role="status" aria-live="polite"></output>
     </form>
@@ -216,7 +216,7 @@ fetch('/api/grid').then(r => r.ok ? r.json() : null).then(g => {
 // ---------------------------------------------------------------- the door
 // for the kind of person who opens the console on a landing page.
 console.log(
-  '%capply from here if you like: %cjoin("you@example.com")',
+  '%cleave an email from here if you like: %cjoin("you@example.com")',
   'color:#7A7160', 'color:#FF8A4A;font-weight:bold'
 );
 window.join = async (email) => {
@@ -231,7 +231,8 @@ window.join = async (email) => {
       body: JSON.stringify({ email: email.trim(), via: 'console' }),
     });
     const data = await res.json();
-    console.log('%c' + (data.ok ? data.message : data.error), 'color:#FF8A4A');
+    // keep the front door vague; the server's wording is the about page's.
+    console.log('%c' + (data.ok ? 'noted. and respect, for reading the source.' : data.error), 'color:#FF8A4A');
     if (data.ok) window.__surge && window.__surge();
   } catch {
     console.log('network said no. try again.');
@@ -257,7 +258,8 @@ form.addEventListener('submit', async e => {
       body: JSON.stringify({ email, company: form.company.value }),
     });
     const data = await res.json();
-    status.textContent = (data.ok ? data.message : data.error) + '.';
+    // keep the front door vague; the server's wording is the about page's.
+    status.textContent = (data.ok ? 'got it. talk soon' : data.error) + '.';
     if (data.ok) { input.value = ''; window.__surge && window.__surge(); }
   } catch {
     status.textContent = 'network said no. try again.';
