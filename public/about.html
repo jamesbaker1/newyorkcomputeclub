@@ -6,9 +6,9 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0C0A">
 <title>about &middot; new york compute club</title>
-<meta name="description" content="still taking applications.">
+<meta name="description" content="a pooled gpu cluster on member hardware across new york. bring a card, a workload, or both.">
 <meta property="og:title" content="about &middot; new york compute club">
-<meta property="og:description" content="still taking applications.">
+<meta property="og:description" content="a pooled gpu cluster on member hardware across new york. bring a card, a workload, or both.">
 <meta property="og:url" content="https://newyorkcomputeclub.com/about">
 <meta property="og:image" content="https://newyorkcomputeclub.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -192,23 +192,31 @@
 
   <h1>Still taking<br>applications</h1>
 
-  <p>the club is a pooled gpu cluster that lives in new york. members rack
-  their own hardware in apartments, offices, and one very good basement in
-  red hook. the club schedules jobs across all of it. you can bring a card,
-  bring a workload, or bring both. both is our favorite.</p>
+  <p>new york compute club is a pooled gpu cluster that lives in new
+  york. members rack their own hardware in apartments, offices, and one
+  very good basement in red hook, and the club schedules jobs across all
+  of it. you can bring a card, bring a workload, or bring both. both is
+  our favorite.</p>
 
-  <p>the pitch is an old rule with new nouns. <strong>not your compute, not
-  your model.</strong> weights you rent live in someone else's building,
-  behind someone else's key, and the price changes with their mood. our
-  answer is to own the building. every node is member hardware inside the
-  city limits. jobs move between nodes sealed, so the scheduler only ever
-  sees ciphertext and a wattage number. the node that runs your job can read
-  your job, which is why you pick your node.</p>
+  <p>the idea comes from an old crypto saying, not your keys, not your
+  coins. if an exchange holds your coins, what you really hold is an iou
+  from the exchange. open weights have quietly ended up in the same
+  place. you are licensed to run the model, but it doesn't fit on
+  anything you own, so in practice you rent an 8x h100 node from one of
+  a few clouds at whatever price they set that month. <strong>not your
+  compute, not your model.</strong></p>
 
-  <p>the rule has a v2 for later. <strong>not your power, not your
-  model.</strong> the red hook basement already votes yes.</p>
+  <p>our answer is to own the building. every node in the club is member
+  hardware inside the city limits. jobs travel between nodes as sealed
+  boxes, so the scheduler only ever sees ciphertext, a node id, and a
+  wattage number. the node that runs your job can read your job, which
+  is why you pick your node.</p>
 
-  <p>if you want the longer argument, it's written down over at
+  <p>the rule has a second version for later. <strong>not your power,
+  not your model.</strong> the red hook basement has a generator and
+  opinions on the subject.</p>
+
+  <p>the longer version of the argument is written down over at
   <a href="https://deskofjim.com/blog/compute/">not your compute, not your model</a>.</p>
 
   <h2>house rules</h2>
@@ -221,23 +229,23 @@
   </ol>
 
   <h2>the software</h2>
-  <p>everything is built in the open and none of it is finished. come poke
-  around.</p>
+  <p>everything is built in the open and none of it is finished yet.
+  come poke around.</p>
   <ul class="repos">
     <li><a href="https://github.com/jamesbaker1/nycc-engine">nycc-engine</a>
       <span class="what">&middot; the inference engine every node runs.</span></li>
     <li><a href="https://github.com/jamesbaker1/nycc-grid">nycc-grid</a>
-      <span class="what">&middot; the mesh. scheduling, sealed jobs, an untrusted coordinator.</span></li>
+      <span class="what">&middot; the mesh. scheduling, sealed jobs, and an untrusted coordinator.</span></li>
     <li><a href="https://github.com/jamesbaker1/newyorkcomputeclub">newyorkcomputeclub</a>
       <span class="what">&middot; this website, manhattan included.</span></li>
   </ul>
   <p>a good pull request moves your application up the pile.</p>
 
   <h2>applying</h2>
-  <p>membership is small on purpose, and there's no form beyond this one.
-  leave an email and we'll get back to you. we read everything, we just
-  answer slowly. it helps if you've trained something, broken something, or
-  own something with a fan.</p>
+  <p>membership is small on purpose, and this box is the whole
+  application. leave an email and we'll get back to you. we read
+  everything, we are just slow about it. it helps if you've trained
+  something, broken something, or own something with a fan.</p>
 
   <form id="apply" novalidate>
     <div class="row">
