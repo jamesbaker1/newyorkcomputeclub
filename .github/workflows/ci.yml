@@ -18,3 +18,5 @@ jobs:
         run: npm run build
       - name: bundle is non-empty
         run: test -s public/js/city.min.js
+      - name: bundle matches source
+        run: git diff --exit-code public/js/city.min.js

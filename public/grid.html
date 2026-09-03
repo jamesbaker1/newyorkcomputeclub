@@ -1,0 +1,325 @@
+<!doctype html>
+<!-- reads /api/stats first (the coordinator's own aggregate) and falls back
+     to the lighter /api/grid when the coordinator has nothing to say yet.
+     zero nodes and no answer at all are rendered as two different things:
+     one is the club being quiet, the other is the grid being unreachable. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0E0C0A">
+<title>grid &middot; new york compute club</title>
+<meta name="description" content="live node counts and wattage, read straight off the coordinator.">
+<meta property="og:title" content="grid &middot; new york compute club">
+<meta property="og:description" content="live node counts and wattage, read straight off the coordinator.">
+<meta property="og:url" content="https://newyorkcomputeclub.com/grid">
+<meta property="og:image" content="https://newyorkcomputeclub.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E0C0A'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23FF4E00'/%3E%3C/svg%3E">
+<style>
+  @font-face {
+    font-family: 'Anton';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/anton-latin.woff2') format('woff2');
+  }
+  :root {
+    --paper: #0E0C0A;
+    --ink: #EDE6DA;
+    --heat: #FF4E00;
+    --heat-text: #FF8A4A;
+    --fade: #8E8472;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html { overscroll-behavior: none; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.75;
+    letter-spacing: .01em;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  ::selection { background: var(--heat); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--heat); outline-offset: 3px; }
+
+  .col {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 26px 24px 90px;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+    margin-bottom: 72px;
+  }
+  a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(122,113,96,.5); padding-bottom: 1px; }
+  a:hover, a:focus-visible { color: var(--heat-text); border-color: var(--heat); }
+  nav a { border-bottom-color: transparent; }
+  nav a:hover, nav a:focus-visible { border-bottom-color: var(--heat); }
+  /* visual size stays; the touch boxes grow to ~44px */
+  nav a, footer a { padding: 14px; margin: -14px; }
+
+  h1 {
+    font-family: 'Anton', 'Arial Narrow', var(--sans);
+    font-size: clamp(2.9rem, 11vw, 5.4rem);
+    font-weight: 400;
+    line-height: .9;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    margin: 0 0 40px;
+  }
+  h2 {
+    font-size: 11.5px;
+    font-weight: 400;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--fade);
+    margin: 48px 0 18px;
+  }
+  p { margin: 0 0 18px; }
+  .col > p { color: #C9C1B2; }
+
+  .pilot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--heat);
+    vertical-align: baseline;
+    margin-right: 9px;
+    animation: breathe 4.2s ease-in-out infinite;
+  }
+  .pilot.quiet { background: var(--fade); opacity: .65; animation: none; }
+  .pilot.down { background: transparent; border: 1px solid var(--fade); animation: none; }
+  @media (prefers-reduced-motion: reduce) { .pilot { animation: none; } }
+  @keyframes breathe {
+    0%, 100% { opacity: .45; transform: scale(.85); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .statusline {
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--fade);
+    margin: 30px 0 0;
+  }
+
+  .tiles { display: flex; flex-wrap: wrap; gap: 30px 44px; margin: 34px 0 8px; }
+  .tile .num {
+    font-family: 'Anton', 'Arial Narrow', var(--sans);
+    font-size: clamp(1.9rem, 7vw, 2.7rem);
+    font-weight: 400;
+    line-height: .95;
+    letter-spacing: .01em;
+  }
+  .tile .lbl {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fade);
+    margin-top: 5px;
+  }
+  .tile .sub { font-size: 12px; color: #C9C1B2; margin-top: 5px; }
+
+  .hoods { margin: 0 0 8px; }
+  .hood {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(237,230,218,.08);
+    font-size: 12.5px;
+  }
+  .hood .name { flex: 0 0 108px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hood .bar { flex: 1 1 auto; height: 5px; border-radius: 3px; background: rgba(142,132,114,.18); overflow: hidden; }
+  .hood .bar > span { display: block; height: 100%; background: var(--heat); border-radius: 3px; }
+  .hood .meta { flex: 0 0 auto; color: var(--fade); white-space: nowrap; }
+
+  .note { font-size: 12.5px; color: var(--fade); margin: 18px 0 0; }
+  .note a { color: var(--heat-text); border-color: rgba(255,138,74,.5); }
+
+  footer {
+    margin-top: 96px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(237,230,218,.14);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px 24px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    color: var(--fade);
+  }
+</style>
+</head>
+<body>
+<div class="col">
+  <nav>
+    <a href="/">&larr; the city</a>
+    <a href="/about">about</a>
+  </nav>
+
+  <h1>The Grid</h1>
+
+  <p>a node counts as alive if it heartbeat in the last ninety seconds.
+  this reads exactly what the coordinator sees, refreshed every twenty.</p>
+
+  <p class="statusline">
+    <span class="pilot quiet" id="pilot"></span><span id="statusmsg">reading the grid&hellip;</span>
+  </p>
+
+  <div id="dash"></div>
+
+  <footer>
+    <span id="checked">not checked yet</span>
+    <span>a club, not a cloud.</span>
+  </footer>
+</div>
+
+<script>
+// ------------------------------------------------------------------- the read
+// two feeds: /api/stats is the coordinator's own aggregate (richer, and 502s
+// until the coordinator ships it); /api/grid is the lighter proxy the pilot
+// light on /about already reads. this page tries the rich one first and only
+// falls back to the light one when the rich one has nothing to say.
+const REFRESH_MS = 20000;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
+}
+function fmtInt(n) {
+  return Number.isFinite(n) ? n.toLocaleString('en-US') : '—';
+}
+function fmtWatts(n) {
+  return Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 1 }) + 'w' : '—';
+}
+function plural(n, one, many) {
+  return n === 1 ? one : many;
+}
+
+async function getJson(path) {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.ok ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function tile(num, lbl, sub) {
+  const t = el('div', 'tile');
+  t.appendChild(el('div', 'num', num));
+  t.appendChild(el('div', 'lbl', lbl));
+  if (sub) t.appendChild(el('div', 'sub', sub));
+  return t;
+}
+
+function hoodRow(h, max) {
+  const row = el('div', 'hood');
+  row.appendChild(el('span', 'name', h.name));
+  const bar = el('span', 'bar');
+  bar.setAttribute('aria-hidden', 'true');
+  const fill = el('span');
+  fill.style.width = Math.max(4, Math.round((h.watts / max) * 100)) + '%';
+  bar.appendChild(fill);
+  row.appendChild(bar);
+  row.appendChild(el('span', 'meta', fmtInt(h.nodes) + ' · ' + fmtWatts(h.watts)));
+  return row;
+}
+
+async function refresh() {
+  if (document.hidden) return; // no point polling a tab nobody's looking at
+  const [stats, grid] = await Promise.all([getJson('/api/stats'), getJson('/api/grid')]);
+  render(stats, grid);
+}
+
+function render(stats, grid) {
+  document.getElementById('checked').textContent =
+    'checked ' + new Date().toLocaleTimeString('en-US', { hour12: false });
+
+  const pilot = document.getElementById('pilot');
+  const statusmsg = document.getElementById('statusmsg');
+  const dash = document.getElementById('dash');
+  dash.replaceChildren();
+
+  if (!stats && !grid) {
+    pilot.className = 'pilot down';
+    statusmsg.textContent = "can't reach the grid from here.";
+    dash.appendChild(el('p', 'note', "the coordinator didn't answer. it happens — try again shortly."));
+    return;
+  }
+
+  const nodes = stats ? stats.nodes_alive : grid.nodes;
+  const watts = stats ? stats.watts : grid.watts;
+  const quiet = !nodes;
+
+  pilot.className = 'pilot' + (quiet ? ' quiet' : '');
+  statusmsg.textContent = quiet
+    ? 'quiet right now — 0 nodes awake'
+    : fmtInt(nodes) + ' ' + plural(nodes, 'node', 'nodes') + ' awake';
+
+  const tiles = el('div', 'tiles');
+  tiles.appendChild(tile(
+    fmtInt(nodes),
+    plural(nodes, 'node alive', 'nodes alive'),
+    !stats && grid
+      ? fmtInt(grid.members) + ' member' + (grid.members === 1 ? '' : 's') + ', ' +
+        fmtInt(grid.walkins) + ' walk-in' + (grid.walkins === 1 ? '' : 's')
+      : null
+  ));
+  tiles.appendChild(tile(
+    fmtWatts(watts),
+    'on the wire',
+    stats && stats.watts_measured ? fmtWatts(stats.watts_measured) + ' measured' : null
+  ));
+  if (stats) {
+    tiles.appendChild(tile(fmtInt(stats.jobs_done), plural(stats.jobs_done, 'job done', 'jobs done')));
+  }
+  dash.appendChild(tiles);
+
+  if (stats && stats.neighborhoods && stats.neighborhoods.length) {
+    dash.appendChild(el('h2', null, 'by neighborhood'));
+    const max = Math.max(...stats.neighborhoods.map(h => h.watts), 1);
+    const hoods = el('div', 'hoods');
+    stats.neighborhoods.forEach(h => hoods.appendChild(hoodRow(h, max)));
+    dash.appendChild(hoods);
+  }
+
+  if (stats && stats.partial) {
+    dash.appendChild(el('p', 'note', 'reading a slice of the grid — totals are a floor, not the whole picture.'));
+  }
+  if (!stats && grid) {
+    dash.appendChild(el('p', 'note', "coordinator stats aren't answering — this is the light feed."));
+  }
+  if (quiet) {
+    const note = el('p', 'note');
+    note.appendChild(document.createTextNode("nobody's plugged in right now. "));
+    const link = el('a', null, 'be the first');
+    link.href = '/about';
+    note.appendChild(link);
+    note.appendChild(document.createTextNode('.'));
+    dash.appendChild(note);
+  }
+}
+
+refresh();
+setInterval(refresh, REFRESH_MS);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>

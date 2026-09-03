@@ -18,14 +18,33 @@ your cursor overrides it. Joining the list makes every wire fire.
 
 - `public/index.html` — the landing page.
 - `public/about.html` — the application.
+- `public/grid.html` — the grid dashboard, reading `/api/grid` and
+  `/api/stats`.
 - `src/site/city.js` — the scene source. Bundled (with three.js 0.170.0,
   tree-shaken) to `public/js/city.min.js`, which is committed, so deploys
   need no build.
 - `public/fonts/` — self-hosted Anton (SIL OFL).
-- `src/worker.js` — Cloudflare Worker; serves `public/` and handles
-  `POST /api/subscribe` into KV (honeypot, dedupe with first-seen
-  timestamp kept, machine-readable `already` flag).
-- `wrangler.toml` — Worker config: static assets, KV binding, custom domains.
+- `src/worker.js` — Cloudflare Worker; serves `public/` and the API below.
+- `wrangler.toml` — Worker config: static assets, KV binding, `send_email`
+  binding, cron trigger, custom domains.
+
+## API
+
+- `POST /api/subscribe` — adds an email to the list (KV). Honeypot,
+  per-IP rate limit, dedupe with first-seen timestamp kept,
+  machine-readable `already` flag.
+- `GET /api/grid` — node count and total wattage, proxied from the grid
+  coordinator.
+- `GET /api/stats` — the coordinator's richer stats feed, proxied the
+  same way. 502s until the coordinator ships `/v1/stats`.
+- `GET /api/digest` — runs the digest by hand. Needs an `x-digest-key`
+  header matching the `DIGEST_KEY` secret.
+
+A cron trigger runs that same digest at 13:00 UTC (`wrangler.toml`
+`[triggers]`), mailing new applications to the owner through the
+`send_email` binding (`OWNER_EMAIL`). A signup also gets an instant,
+best-effort notification to the same address; the digest stays the
+source of truth if that send fails.
 
 ## Deploy
 
@@ -45,8 +64,12 @@ npm run build
 
 ## Read the list
 
+The namespace holds more than emails now: `rl:<ip>` rate-limit keys and
+the `__digest__` state key sit alongside signups. Filter to emails the
+same way the digest does, on `@`:
+
 ```sh
-npx wrangler kv key list --binding SIGNUPS --remote
+npx wrangler kv key list --binding SIGNUPS --remote | jq '[.[] | select(.name | contains("@"))]'
 ```
 
 Each key is an email; each value has a signup timestamp and country.

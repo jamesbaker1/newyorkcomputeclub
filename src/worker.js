@@ -5,6 +5,11 @@
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+// Owner's inbox. wrangler.toml's send_email destination_address stays a
+// literal (routing config can't reference this), but everywhere the worker
+// itself addresses mail, it reads from here.
+const OWNER_EMAIL_ADDRESS = 'james.baker1628@gmail.com';
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -96,7 +101,7 @@ async function subscribe(request, env) {
     try {
       const raw = [
         'From: the club <digest@newyorkcomputeclub.com>',
-        'To: james.baker1628@gmail.com',
+        `To: ${OWNER_EMAIL_ADDRESS}`,
         `Subject: new application: ${email}`,
         `Message-ID: <${crypto.randomUUID()}@newyorkcomputeclub.com>`,
         'Content-Type: text/plain; charset=utf-8',
@@ -106,7 +111,7 @@ async function subscribe(request, env) {
       ].join('\r\n');
       const { EmailMessage } = await import('cloudflare:email');
       await env.OWNER_EMAIL.send(
-        new EmailMessage('digest@newyorkcomputeclub.com', 'james.baker1628@gmail.com', raw)
+        new EmailMessage('digest@newyorkcomputeclub.com', OWNER_EMAIL_ADDRESS, raw)
       );
     } catch {}
   }
@@ -189,7 +194,7 @@ async function runDigest(env) {
     const subject = `${fresh.length} new application${fresh.length === 1 ? '' : 's'}`;
     const raw = [
       'From: the club <digest@newyorkcomputeclub.com>',
-      'To: james.baker1628@gmail.com',
+      `To: ${OWNER_EMAIL_ADDRESS}`,
       `Subject: ${subject}`,
       `Message-ID: <${crypto.randomUUID()}@newyorkcomputeclub.com>`,
       'Content-Type: text/plain; charset=utf-8',
@@ -203,7 +208,7 @@ async function runDigest(env) {
     ].join('\r\n');
     const { EmailMessage } = await import('cloudflare:email');
     await env.OWNER_EMAIL.send(
-      new EmailMessage('digest@newyorkcomputeclub.com', 'james.baker1628@gmail.com', raw)
+      new EmailMessage('digest@newyorkcomputeclub.com', OWNER_EMAIL_ADDRESS, raw)
     );
     sent = true;
   }

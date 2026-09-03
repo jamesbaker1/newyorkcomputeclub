@@ -159,11 +159,42 @@
   button:hover, button:focus-visible { background: var(--heat); }
   button:active { transform: translateY(1px); }
   button:disabled { opacity: .55; cursor: default; }
+  /* the follow-up: one optional line, asked after the email is in */
+  .modal {
+    position: fixed; inset: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal[hidden] { display: none; }
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(14,12,10,.74);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .modal-card {
+    position: relative;
+    width: 100%; max-width: 440px;
+    background: var(--paper);
+    border: 1px solid rgba(237,230,218,.16);
+    padding: 26px 26px 22px;
+    animation: rise .28s ease-out;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .modal-card { animation: none; } }
+  .modal-kicker {
+    margin: 0 0 10px;
+    font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--heat-text);
+  }
+  .modal-q { margin: 0; color: #C9C1B2; }
+  .modal-row { display: flex; gap: 16px; align-items: center; margin-top: 22px; }
+  .modal-row button { height: 42px; }
+  button.ghost { background: transparent; color: var(--fade); padding: 0 6px; }
+  button.ghost:hover, button.ghost:focus-visible { background: transparent; color: var(--heat-text); }
   .note {
     display: block;
     width: 100%;
-    max-width: 420px;
-    margin-top: 12px;
+    margin-top: 14px;
     font-family: var(--mono);
     font-size: 16px;
     color: var(--ink);
@@ -273,10 +304,22 @@
       <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button type="submit">apply</button>
     </div>
-    <label class="hp" for="note">a link, or a line about you</label>
-    <input id="note" name="note" class="note" type="text" placeholder="a link, or a line about you. optional." autocomplete="off" spellcheck="false" maxlength="500">
     <output id="status" role="status" aria-live="polite"></output>
   </form>
+
+    <div id="more" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="more-q">
+      <div class="modal-backdrop" data-close></div>
+      <form class="modal-card" id="more-form" novalidate>
+        <p class="modal-kicker">application received</p>
+        <p class="modal-q" id="more-q">anything you'd like us to see? a website, a linkedin, a line about you. optional.</p>
+        <label class="hp" for="note">a link, or a line about you</label>
+        <input id="note" name="note" class="note" type="text" placeholder="a link, or a line" autocomplete="off" spellcheck="false" maxlength="500">
+        <div class="modal-row">
+          <button type="submit">add it</button>
+          <button type="button" class="ghost" data-close>skip</button>
+        </div>
+      </form>
+    </div>
 
   <footer>
     <span>instigated by <a href="https://deskofjim.com">james</a>.</span>
@@ -298,6 +341,42 @@ fetch('/api/grid').then(r => r.ok ? r.json() : null).then(g => {
 const form = document.getElementById('apply');
 const input = document.getElementById('email');
 const note = document.getElementById('note');
+const more = document.getElementById('more');
+const moreForm = document.getElementById('more-form');
+let applied = ''; // the email the follow-up attaches to
+
+function openMore(email) {
+  applied = email;
+  note.value = '';
+  more.hidden = false;
+  setTimeout(() => note.focus(), 40);
+}
+function closeMore() { more.hidden = true; applied = ''; }
+more.addEventListener('click', e => { if (e.target.hasAttribute('data-close')) closeMore(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !more.hidden) closeMore(); });
+
+// the email is already in; this only adds the line. skipping loses nothing.
+moreForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = note.value.trim();
+  const email = applied;
+  if (!text || !email) { closeMore(); return; }
+  const b = moreForm.querySelector('button[type=submit]');
+  b.disabled = true;
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, note: text, company: form.company.value }),
+    });
+    const data = await res.json();
+    status.textContent = data.ok ? 'noted. we answer slowly.' : data.error + '.';
+  } catch {
+    status.textContent = 'network said no, but your application went through.';
+  }
+  b.disabled = false;
+  closeMore();
+});
 const status = document.getElementById('status');
 const btn = form.querySelector('button');
 
@@ -311,11 +390,11 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, note: note.value.trim(), company: form.company.value }),
+      body: JSON.stringify({ email, company: form.company.value }),
     });
     const data = await res.json();
     status.textContent = data.ok ? data.message : data.error + '.';
-    if (data.ok) { if (!data.already) input.value = ''; note.value = ''; }
+    if (data.ok) { if (!data.already) input.value = ''; openMore(email); }
   } catch {
     status.textContent = 'network said no. try again.';
   }
