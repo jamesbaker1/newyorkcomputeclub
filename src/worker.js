@@ -29,6 +29,7 @@ async function overRateLimit(request, env) {
 
 async function subscribe(request, env) {
   let email = '';
+  let note = '';
   let honeypot = '';
   let via = 'form';
   try {
@@ -36,11 +37,13 @@ async function subscribe(request, env) {
     if (type.includes('application/json')) {
       const body = await request.json();
       email = body.email || '';
+      note = body.note || '';
       honeypot = body.company || '';
       if (body.via === 'console') via = 'console';
     } else {
       const form = await request.formData();
       email = form.get('email') || '';
+      note = form.get('note') || '';
       honeypot = form.get('company') || '';
     }
   } catch {
@@ -51,6 +54,8 @@ async function subscribe(request, env) {
   if (honeypot) return json({ ok: true, already: false, message: 'application received. we answer slowly.' });
 
   email = String(email).trim().toLowerCase();
+  // free text: a link, a line, whatever they like. one line, bounded.
+  note = String(note).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 500);
   if (!EMAIL_RE.test(email) || email.length > 254) {
     return json({ ok: false, error: 'that email does not parse' }, 400);
   }
@@ -67,6 +72,11 @@ async function subscribe(request, env) {
   // stored first-seen timestamp is what makes that harmless.
   const prior = await env.SIGNUPS.get(email, 'json');
   if (prior) {
+    // a returning applicant can still leave or update their line.
+    if (note && note !== prior.note) {
+      await env.SIGNUPS.put(email, JSON.stringify({ ...prior, note }));
+      return json({ ok: true, already: true, message: 'you already applied. added your note.' });
+    }
     return json({ ok: true, already: true, message: 'you already applied. patience.' });
   }
 
@@ -76,6 +86,7 @@ async function subscribe(request, env) {
       ts: new Date().toISOString(),
       country: request.cf?.country || '',
       via,
+      ...(note ? { note } : {}),
     })
   );
 
@@ -91,6 +102,7 @@ async function subscribe(request, env) {
         'Content-Type: text/plain; charset=utf-8',
         '',
         `${email}  (via ${via}${request.cf?.country ? ', ' + request.cf.country : ''})`,
+        ...(note ? ['', note] : []),
       ].join('\r\n');
       const { EmailMessage } = await import('cloudflare:email');
       await env.OWNER_EMAIL.send(
@@ -172,6 +184,7 @@ async function runDigest(env) {
     for (const e of fresh) {
       const rec = (await env.SIGNUPS.get(e, 'json')) || {};
       lines.push(`${e}  (${rec.ts || 'unknown time'}${rec.country ? ', ' + rec.country : ''})`);
+      if (rec.note) lines.push(`    ${rec.note}`);
     }
     const subject = `${fresh.length} new application${fresh.length === 1 ? '' : 's'}`;
     const raw = [

@@ -159,6 +159,23 @@
   button:hover, button:focus-visible { background: var(--heat); }
   button:active { transform: translateY(1px); }
   button:disabled { opacity: .55; cursor: default; }
+  .note {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(237,230,218,.32);
+    border-radius: 0;
+    padding: 10px 2px;
+    transition: border-color .2s ease;
+  }
+  .note::placeholder { color: var(--fade); }
+  .note:focus { outline: none; border-color: var(--heat); }
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   #status {
     display: block;
@@ -204,6 +221,8 @@
         <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button type="submit">apply</button>
       </div>
+      <label class="hp" for="note">a link, or a line about you</label>
+      <input id="note" name="note" class="note" type="text" placeholder="a link, or a line about you. optional." autocomplete="off" spellcheck="false" maxlength="500">
       <output id="status" role="status" aria-live="polite"></output>
     </form>
   </main>
@@ -250,6 +269,7 @@ window.join = async (email) => {
 // ---------------------------------------------------------------- the list
 const form = document.getElementById('join');
 const input = document.getElementById('email');
+const note = document.getElementById('note');
 const status = document.getElementById('status');
 const btn = form.querySelector('button');
 
@@ -263,11 +283,11 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, company: form.company.value }),
+      body: JSON.stringify({ email, note: note.value.trim(), company: form.company.value }),
     });
     const data = await res.json();
     status.textContent = (data.ok ? data.message : data.error) + '.';
-    if (data.ok) { input.value = ''; window.__surge && window.__surge(); }
+    if (data.ok) { input.value = ''; note.value = ''; window.__surge && window.__surge(); }
   } catch {
     status.textContent = 'network said no. try again.';
   }
