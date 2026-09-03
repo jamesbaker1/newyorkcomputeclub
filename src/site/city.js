@@ -10,7 +10,7 @@ import {
   BoxGeometry, PlaneGeometry, OctahedronGeometry, BufferGeometry, BufferAttribute,
   MeshLambertMaterial, MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
   InstancedMesh, Mesh, Line, LineSegments, Points, DynamicDrawUsage, AdditiveBlending,
-  Matrix4, Quaternion, Color, Vector2, Vector3, Plane, Raycaster, QuadraticBezierCurve3, Group,
+  Matrix4, Color, Vector2, Vector3, Plane, Raycaster, QuadraticBezierCurve3, Group,
 } from 'three';
 
 console.log('%cNEW YORK COMPUTE CLUB', 'font-weight:bold;background:#FF4E00;color:#0E0C0A;padding:2px 8px;');
@@ -63,49 +63,38 @@ function buildCity() {
   const gauss2 = (dx, dz, s) => Math.exp(-(dx * dx + dz * dz) / (2 * s * s));
 
   // -------- landmasses. +x east, +z north, water is wherever nothing stands.
-  // manhattan has its own frame: u across the island, v along it, and the
-  // island leans 29 degrees east of north like the real one. the street
-  // grid leans with it.
-  const TILT = 29 * Math.PI / 180;
-  const sT = Math.sin(TILT), cT = Math.cos(TILT);
-  const toMap = (u, v) => [u * cT + v * sT, -u * sT + v * cT];
-  const toIsland = (x, z) => [x * cT - z * sT, x * sT + z * cT];
-  // half-width along the island: widest through the village and midtown,
-  // narrowing toward inwood
-  const mEast = v => 9.8 * (1 - Math.abs(v / 33.5) ** 2.2) ** (1 / 2.2) * (1 - 0.32 * clamp01((v - 4) / 29));
-  const inManhattan = (u, v) => {
-    if (Math.abs(v) > 33.5 || Math.abs(u) > mEast(v)) return false;         // water
-    if (u > -2.6 && u < 2.6 && v > 6 && v < 19) return false;              // central park
-    if (Math.abs(u - (1.5 - 0.1226 * (v + 33))) < 0.55) return false;      // broadway
+  const mEast = z => 9.8 * (1 - Math.abs(z / 33.5) ** 2.2) ** (1 / 2.2);
+  const inManhattan = (x, z) => {
+    if ((Math.abs(x) / 9.8) ** 2.2 + (Math.abs(z) / 33.5) ** 2.2 > 1) return false; // water
+    if (x > -2.6 && x < 2.6 && z > 6 && z < 19) return false;                       // central park
+    if (Math.abs(x - (1.5 - 0.1226 * (z + 33))) < 0.55) return false;               // broadway
     return true;
   };
   // brooklyn + queens: one landmass, west coast tracking the east river
   const inBQ = (x, z) => {
-    const [u, v] = toIsland(x, z);
-    const coast = v > 33.5 ? -99 : v >= -32 ? mEast(v) + 4.5 : 8 + (v + 32) * 0.9;
-    if (u < coast) return false;
-    const main = Math.abs((x - 22) / 28) ** 2.5 + Math.abs((z + 13) / 40) ** 2.5 <= 1;
+    const coast = z >= -32 ? mEast(z) + 4.5 : 8 + (z + 32) * 0.9;
+    if (x < coast) return false;
+    const main = Math.abs((x - 26) / 24) ** 2.5 + Math.abs((z + 13) / 40) ** 2.5 <= 1;
     const swLobe = ((x - 2) / 12) ** 2 + ((z + 46) / 7) ** 2 <= 1; // bay ridge & coney
     return main || swLobe;
   };
-  const inBronx = (x, z) => Math.abs((x - 20) / 13) ** 2.2 + Math.abs((z - 44) / 11) ** 2.2 <= 1;
+  const inBronx = (x, z) => Math.abs((x - 4) / 13) ** 2.2 + Math.abs((z - 49) / 11) ** 2.2 <= 1;
   const inSI = (x, z) => ((x + 24) / 11) ** 2 + ((z + 52) / 10) ** 2 <= 1;
 
   const lots = [];
   // manhattan, fine grain: the hero
-  for (let iu = -11; iu <= 11; iu++) {
-    for (let iv = -35; iv <= 35; iv++) {
-      if (!inManhattan(iu, iv)) continue;
-      const r = hash(iu, iv);
-      const shore = (Math.abs(iu) / 9.8) ** 2.2 + (Math.abs(iv) / 33.5) ** 2.2;
+  for (let ix = -11; ix <= 11; ix++) {
+    for (let iz = -35; iz <= 35; iz++) {
+      if (!inManhattan(ix, iz)) continue;
+      const r = hash(ix, iz);
+      const shore = (Math.abs(ix) / 9.8) ** 2.2 + (Math.abs(iz) / 33.5) ** 2.2;
       let base =
         0.5 +
-        5.2 * gauss(iv - 2, 6.5) * gauss(iu - 0.5, 5.0) +  // midtown
-        4.4 * gauss(iv + 25, 4.5) * gauss(iu, 3.2);        // downtown
+        5.2 * gauss(iz - 2, 6.5) * gauss(ix - 0.5, 5.0) +  // midtown
+        4.4 * gauss(iz + 25, 4.5) * gauss(ix, 3.2);        // downtown
       base *= 1 - shore * 0.55;
       if (r > 0.986) base *= 1.9;                          // supertalls
-      const [x, z] = toMap(iu, iv);
-      lots.push({ x, z, r, base, fp: 0.60 + 0.22 * r, fp2: 0.60 + 0.22 * hash(iv, iu), outer: false, tilted: true });
+      lots.push({ x: ix, z: iz, r, base, fp: 0.60 + 0.22 * r, fp2: 0.60 + 0.22 * hash(iz, ix), outer: false });
     }
   }
   // outer boroughs: fine, low, dim sprawl. a few real skylines poke out.
@@ -116,10 +105,10 @@ function buildCity() {
       let base =
         0.34 +
         1.1 * gauss2(x - 22, z + 2, 15) +     // broad brooklyn + queens swell
-        2.8 * gauss2(x + 1, z + 30, 3.0) +    // downtown brooklyn
-        1.5 * gauss2(x - 21, z - 13, 2.2) +   // williamsburg waterfront
-        2.9 * gauss2(x - 19, z - 2, 2.6) +    // long island city
-        0.7 * gauss2(x - 16, z - 38, 3.0) +   // south bronx
+        2.8 * gauss2(x - 14, z + 27, 3.0) +   // downtown brooklyn
+        1.5 * gauss2(x - 15, z + 18.5, 2.2) + // williamsburg waterfront
+        2.9 * gauss2(x - 16, z - 1, 2.6) +    // long island city
+        0.7 * gauss2(x - 2, z - 44, 3.0) +    // south bronx
         0.5 * gauss2(x + 20, z + 46, 2.0);    // st. george
       base *= 0.78 + 0.5 * r;
       if (r > 0.993) base *= 1.7;             // the odd outer-borough tower
@@ -148,15 +137,13 @@ function buildCity() {
 
   // -------- bridges: thin arcs where the real ones are
   const bridgeMat = new LineBasicMaterial({ color: 0x8f867a, transparent: true, opacity: 0 });
-  // manhattan ends in island coordinates, the far end as an offset in map units
-  const bridge = (u, v, dx, dz) => { const [x, z] = toMap(u, v); return [[x, z], [x + dx, z + dz]]; };
   const BRIDGES = [
-    bridge(6.4, -27, 6, -2.4),     // brooklyn
-    bridge(7.0, -24.5, 6.3, -2.7), // manhattan
-    bridge(8.4, -18, 6.4, -1.2),   // williamsburg
-    bridge(9.6, -1, 7.1, 1.5),     // queensboro
-    bridge(3, 32, 1.9, 7.1),       // harlem river
-    [[-13, -49.5], [-7, -48.5]],   // verrazzano
+    [[6.4, -27], [13, -30]],     // brooklyn
+    [[7.0, -24.5], [13.5, -27]], // manhattan
+    [[8.4, -18], [13.5, -19]],   // williamsburg
+    [[9.6, -1], [14.8, 0]],      // queensboro
+    [[1.5, 33], [3, 38.5]],      // harlem river
+    [[-13, -49.5], [-7, -48.5]], // verrazzano
   ];
   for (const [[ax, az], [bx, bz]] of BRIDGES) {
     const curve = new QuadraticBezierCurve3(
@@ -168,13 +155,12 @@ function buildCity() {
   }
 
   // -------- the cluster. nodes at the real buildings, jobs on the wires.
-  const onIsland = (u, v, y) => { const [x, z] = toMap(u, v); return { x, z, y }; };
   const NODES = [
-    onIsland(-2, -26, 9),         // 60 hudson st
-    onIsland(-3.5, -13, 7.5),     // 111 8th ave
-    { x: 0, z: -31, y: 6 },       // downtown brooklyn
-    { x: 19, z: 2, y: 6.5 },      // long island city
-    { x: 20, z: 44, y: 4 },       // the bronx
+    { x: -2, z: -26, y: 9 },      // 60 hudson st
+    { x: -3.5, z: -13, y: 7.5 },  // 111 8th ave
+    { x: 15, z: -27, y: 6 },      // downtown brooklyn
+    { x: 16, z: 1, y: 6.5 },      // long island city
+    { x: 6, z: 44, y: 4 },        // the bronx
     { x: -24, z: -52, y: 3 },     // the teleport, staten island
     { x: 40, z: -32, y: 3 },      // the airport cage
   ];
@@ -269,7 +255,9 @@ function buildCity() {
     camera.aspect = w / h;
     portrait = camera.aspect < 0.85;
     camera.fov = portrait ? 52 : 36;
-    // no view offset: the island's centre is the centre of the frame
+    // landscape: pan the frame so the city sits right of the wordmark
+    if (portrait) camera.clearViewOffset();
+    else camera.setViewOffset(w, h, -0.16 * w, 0, w, h);
     camera.updateProjectionMatrix();
   }
   addEventListener('resize', () => { resize(); if (REDUCED) frame(17, 0); });
@@ -281,8 +269,6 @@ function buildCity() {
   const dts = [];
 
   const m4 = new Matrix4();
-  const pos = new Vector3(), scl = new Vector3();
-  const qTilt = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), TILT); // manhattan's grid leans with the island
   const col = new Color();
   let frameIdx = 0, introT = REDUCED ? 99 : 0;
 
@@ -300,11 +286,11 @@ function buildCity() {
     }
 
     if (portrait) {
-      camera.position.set(24 + 3 * Math.sin(t * 0.04), 70, -92);
-      camera.lookAt(0, 0, 0);
+      camera.position.set(22 + 3 * Math.sin(t * 0.04), 64, -88);
+      camera.lookAt(-2, 0, -10);
     } else {
-      camera.position.set(27 + 3 * Math.sin(t * 0.04), 42, -64);
-      camera.lookAt(0, 0, 0);
+      camera.position.set(30 + 3 * Math.sin(t * 0.04), 46, -74);
+      camera.lookAt(-4, 0, -4);
     }
 
     if (performance.now() - pointerAt > 4000) {
@@ -380,18 +366,13 @@ function buildCity() {
       for (const n of hotNodes) kickHeat += n.kick * gauss2(L.x - n.x, L.z - n.z, 2.6);
       let h = Math.max(0.1, L.base * (0.30 + 0.85 * load) + hot * 2.4 * gridBoost + kickHeat * 1.6 + pulse * L.base * 0.55);
       if (rise) {
-        const e = clamp01(introT * 1.15 - Math.hypot(L.x + 12, L.z + 22) * 0.052);
+        const e = clamp01(introT * 1.15 - Math.hypot(L.x, L.z + 25) * 0.052);
         h *= e * e * (3 - 2 * e);
         if (h < 0.001) { m4.makeScale(1, 0.001, 1); m4.setPosition(L.x, -1, L.z); mesh.setMatrixAt(i, m4); continue; }
       }
 
-      if (L.tilted) {
-        pos.set(L.x, 0, L.z); scl.set(L.fp, h, L.fp2);
-        m4.compose(pos, qTilt, scl);
-      } else {
-        m4.makeScale(L.fp, h, L.fp2);
-        m4.setPosition(L.x, 0, L.z);
-      }
+      m4.makeScale(L.fp, h, L.fp2);
+      m4.setPosition(L.x, 0, L.z);
       mesh.setMatrixAt(i, m4);
 
       const g = (L.outer ? 0.27 : 0.30) + 0.16 * L.r;
