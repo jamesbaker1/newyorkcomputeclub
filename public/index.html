@@ -75,7 +75,7 @@
   header, footer {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     gap: 10px 24px;
     flex-wrap: wrap;
     font-family: var(--mono);
@@ -95,6 +95,24 @@
   }
   header a:hover, header a:focus-visible,
   footer a:hover, footer a:focus-visible { color: var(--heat-text); border-color: var(--heat); }
+  /* the one place to go from here, so it gets a real button */
+  header a.go {
+    display: inline-block;
+    margin: -10px 0;
+    padding: 12px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border: 1px solid rgba(237,230,218,.45);
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  header a.go:hover, header a.go:focus-visible {
+    color: var(--paper);
+    background: var(--heat);
+    border-color: var(--heat);
+  }
 
   main {
     margin-top: auto;
@@ -236,7 +254,7 @@
 <div class="sheet">
   <header>
     <span>est. mmxxvi</span>
-    <a href="/about">about</a>
+    <a class="go" href="/about">about &rarr;</a>
   </header>
 
   <main>

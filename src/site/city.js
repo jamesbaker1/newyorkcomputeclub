@@ -10,7 +10,7 @@ import {
   BoxGeometry, PlaneGeometry, OctahedronGeometry, BufferGeometry, BufferAttribute,
   MeshLambertMaterial, MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
   InstancedMesh, Mesh, Line, LineSegments, Points, DynamicDrawUsage, AdditiveBlending,
-  Matrix4, Color, Vector2, Vector3, Plane, Raycaster, QuadraticBezierCurve3,
+  Matrix4, Color, Vector2, Vector3, Plane, Raycaster, QuadraticBezierCurve3, Group,
 } from 'three';
 
 console.log('%cNEW YORK COMPUTE CLUB', 'font-weight:bold;background:#FF4E00;color:#0E0C0A;padding:2px 8px;');
@@ -31,8 +31,16 @@ function buildCity() {
 
   scene.add(new AmbientLight(0x8a8078, 0.6));
   const sun = new DirectionalLight(0xfff2e2, 1.3);
-  sun.position.set(-30, 42, -18); // late light off the hudson
+  sun.position.set(30, 42, -18); // late light off the hudson (world x is west)
   scene.add(sun);
+
+  // the lot math below uses map coordinates, +x east, +z north. seen from
+  // above with +y up that is a left-handed layout, so drawn raw the city
+  // comes out mirrored: brooklyn on the wrong side of the river. one flip
+  // fixes every lot, bridge, node, and wire at once.
+  const city = new Group();
+  city.scale.x = -1;
+  scene.add(city);
 
   // deterministic per-lot randomness
   const hash = (ix, iz) => {
@@ -117,7 +125,7 @@ function buildCity() {
     const c0 = new Color(0x201C18);
     for (let i = 0; i < lots.length; i++) mesh.setColorAt(i, c0);
   }
-  scene.add(mesh);
+  city.add(mesh);
 
   // water: barely lighter than the void, so the islands read as islands
   const water = new Mesh(
@@ -125,7 +133,7 @@ function buildCity() {
     new MeshBasicMaterial({ color: 0x14110E })
   );
   water.position.y = -0.07;
-  scene.add(water);
+  city.add(water);
 
   // -------- bridges: thin arcs where the real ones are
   const bridgeMat = new LineBasicMaterial({ color: 0x8f867a, transparent: true, opacity: 0 });
@@ -143,7 +151,7 @@ function buildCity() {
       new Vector3((ax + bx) / 2, 1.0, (az + bz) / 2),
       new Vector3(bx, 0.25, bz)
     );
-    scene.add(new Line(new BufferGeometry().setFromPoints(curve.getPoints(14)), bridgeMat));
+    city.add(new Line(new BufferGeometry().setFromPoints(curve.getPoints(14)), bridgeMat));
   }
 
   // -------- the cluster. nodes at the real buildings, jobs on the wires.
@@ -167,14 +175,14 @@ function buildCity() {
     n.mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
     n.mesh = new Mesh(nodeGeo, n.mat);
     n.mesh.position.set(n.x, n.y, n.z);
-    scene.add(n.mesh);
+    city.add(n.mesh);
   }
   // hairline pins down to the street
   const pinMat = new LineBasicMaterial({ color: 0xEDE6DA, transparent: true, opacity: 0 });
   {
     const pts = [];
     for (const n of NODES) pts.push(new Vector3(n.x, n.y - 0.38, n.z), new Vector3(n.x, 0, n.z));
-    scene.add(new LineSegments(new BufferGeometry().setFromPoints(pts), pinMat));
+    city.add(new LineSegments(new BufferGeometry().setFromPoints(pts), pinMat));
   }
   // the wires: low arcs between nodes
   const linkMat = new LineBasicMaterial({ color: 0xEDE6DA, transparent: true, opacity: 0 });
@@ -186,7 +194,7 @@ function buildCity() {
       new Vector3((a.x + b.x) / 2, Math.max(a.y, b.y) + len * 0.14, (a.z + b.z) / 2),
       new Vector3(b.x, b.y, b.z)
     );
-    scene.add(new Line(new BufferGeometry().setFromPoints(curve.getPoints(30)), linkMat));
+    city.add(new Line(new BufferGeometry().setFromPoints(curve.getPoints(30)), linkMat));
     return { curve, len, a: ai, b: bi };
   });
   const touching = NODES.map((_, ni) => LINKS.flatMap(([a, b], li) => (a === ni || b === ni ? [li] : [])));
@@ -203,7 +211,7 @@ function buildCity() {
       blending: AdditiveBlending, depthWrite: false,
     }));
     p.frustumCulled = false;
-    scene.add(p);
+    city.add(p);
     return g.attributes.position;
   };
   const heads = mkPoints(6, 0.95);
@@ -227,7 +235,7 @@ function buildCity() {
     nd.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(nd, camera);
     if (ray.ray.intersectPlane(ground, hit)) {
-      heat.tx = Math.max(-38, Math.min(50, hit.x));
+      heat.tx = Math.max(-38, Math.min(50, -hit.x)); // world x back to map x
       heat.tz = Math.max(-62, Math.min(58, hit.z));
       pointerAt = performance.now();
     }
@@ -278,11 +286,11 @@ function buildCity() {
     }
 
     if (portrait) {
-      camera.position.set(14 + 3 * Math.sin(t * 0.04), 66, -86);
-      camera.lookAt(-3, 0, -12);
+      camera.position.set(22 + 3 * Math.sin(t * 0.04), 64, -88);
+      camera.lookAt(-2, 0, -10);
     } else {
-      camera.position.set(20 + 3 * Math.sin(t * 0.04), 48, -72);
-      camera.lookAt(-2, 0, -6);
+      camera.position.set(30 + 3 * Math.sin(t * 0.04), 46, -74);
+      camera.lookAt(-4, 0, -4);
     }
 
     if (performance.now() - pointerAt > 4000) {
